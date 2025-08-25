@@ -5,7 +5,7 @@
 
 ## 📄 Sobre o Projeto
 
-**LicitMatch** é a interface de frontend para um sistema de gerenciamento de licitações. O projeto tem como objetivo principal conectar empresas e órgãos públicos de forma eficiente e transparente, modernizando o processo licitatório.
+Este projeto se refere a interface do sistema **LicitMatch** um sistema de gerenciamento de licitações. O projeto tem como objetivo principal conectar empresas e órgãos públicos de forma eficiente e transparente, modernizando o processo licitatório.
 
 Esta aplicação foi desenvolvida como avaliação para a disciplina de **Projeto Integrador VI**, unindo conceitos de desenvolvimento de software, usabilidade e gestão de projetos para criar uma solução funcional e relevante.
 
