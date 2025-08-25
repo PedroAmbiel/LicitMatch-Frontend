@@ -32,16 +32,17 @@ O sistema foi projetado com dois perfis de usuário em mente, cada um com suas p
 
 ## 💻 Tecnologias Utilizadas
 
-Este projeto foi construído utilizando as seguintes tecnologias de frontend:
+Este projeto foi construído utilizando as seguintes tecnologias:
 
-A ser decidido
+[Em Desenvolvimento]
 
 ---
 
 ## 🚀 Como Executar o Projeto
 
+[Em Desenvolvimento]
 
-
+---
 👥 Equipe / Contribuidores
 Este projeto foi desenvolvido por:
 
