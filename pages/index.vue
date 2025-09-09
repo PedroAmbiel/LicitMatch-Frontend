@@ -1,12 +1,3 @@
-<script setup lang="ts">
-import { FloatLabel, InputText } from 'primevue';
-import Password from 'primevue/password';
-import Panel from 'primevue/panel';
-import Image from 'primevue/image';
-import { NuxtImg } from '#components';
-const value = ref("")
-</script>
-
 <template>
 
     <div>
@@ -29,3 +20,12 @@ const value = ref("")
 </FloatLabel>
     </div>
 </template>
+
+<script setup lang="ts">
+    import { FloatLabel, InputText } from 'primevue';
+    import Password from 'primevue/password';
+    import Panel from 'primevue/panel';
+    import Image from 'primevue/image';
+    import { NuxtImg } from '#components';
+    const value = ref("")
+</script>
