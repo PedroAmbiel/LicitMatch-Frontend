@@ -32,8 +32,8 @@ function toggleFavorito(id: number) {
   <h1 class="text-3xl mx-6">Visualizar Editais</h1>
   <div class="bg-inherit p-4 sm:p-6 ">
     <Tabs v-model:value="activeTab"  >
-      <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-10">
-        <TabList class="w-full sm:w-auto">
+      <div class="flex flex-col sm:flex-row justify-between items-start gap-10">
+        <TabList class="w-full sm:w-full">
           <Tab value="todos">
             <i class="pi pi-list mr-2"></i>
             <span>Todos</span>

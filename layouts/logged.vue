@@ -26,11 +26,28 @@ function toggleDesktopSidebar() {
         />
       </aside>
 
+    <Sidebar
+      v-model:visible="mobileSidebarVisible"
+      :modal="true"
+      class="w-full md:hidden"
+      :show-close-icon="false"
+      :pt="{
+        root: { class: 'border-none bg-blue-900 w-72' },
+        content: { class: 'p-0' },
+        mask: { class: 'bg-black/20' }
+      }"
+    >
+      <LoggedSideBar 
+        :is-minimized="false" 
+        @toggle="mobileSidebarVisible = false" 
+      />
+    </Sidebar>
+
       <main 
         class="flex-1 transition-all duration-300 ease-in-out"
       >
-        <div class="p-4 md:p-6 lg:p-8">
-          <header class="flex items-center gap-4 mb-4">
+      <div class="p-4 md:p-6 lg:p-8">
+        <header class="flex items-center gap-4 mb-4">
             <Button
               icon="pi pi-bars"
               text
