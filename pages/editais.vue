@@ -19,15 +19,40 @@ const activeTab = ref('todos');
 const editaisDestaque = computed(() => allEditais.value.filter(e => e.isDestaque));
 const editaisFavoritos = computed(() => allEditais.value.filter(e => e.isFavorito));
 
+
+const isDetailSidebarVisible = ref(false);
+const selectedEdital = ref<any>(null);
+
 function toggleFavorito(id: number) {
   const edital = allEditais.value.find(e => e.id === id);
   if (edital) {
     edital.isFavorito = !edital.isFavorito;
   }
 }
+
+function showEditalDetails(edital: any) {
+  selectedEdital.value = edital;
+  isDetailSidebarVisible.value = true;
+}
 </script>
 
 <template>
+    
+    <Sidebar
+      v-model:visible="isDetailSidebarVisible"
+      position="right"
+      class="!w-2/4"
+      :pt="{
+        mask: { class: 'bg-black/10 backdrop-blur-sm' },
+        header: { class: 'hidden' },
+        content: { class: 'p-0' }
+      }">
+      <EditalDetalhe 
+        :edital="selectedEdital"
+        @close="isDetailSidebarVisible = false"
+        @toggle-favorito="toggleFavorito"
+      />
+    </Sidebar>
 
   <h1 class="text-3xl mx-6">Visualizar Editais</h1>
   <div class="bg-inherit p-4 sm:p-6 ">
@@ -55,13 +80,13 @@ function toggleFavorito(id: number) {
 
       <TabPanels class="rounded-tr-2xl rounded-br-2xl rounded-bl-2xl">
         <TabPanel value="todos">
-          <EditaisList :editais="allEditais" @toggle-favorito="toggleFavorito" />
+          <EditaisList :editais="allEditais" @toggle-favorito="toggleFavorito" @edital-selected="showEditalDetails" />
         </TabPanel>
         <TabPanel value="destaques">
-          <EditaisList :editais="editaisDestaque" @toggle-favorito="toggleFavorito" />
+          <EditaisList :editais="editaisDestaque" @toggle-favorito="toggleFavorito" @edital-selected="showEditalDetails"  />
         </TabPanel>
         <TabPanel value="favoritos">
-          <EditaisList :editais="editaisFavoritos" @toggle-favorito="toggleFavorito" />
+          <EditaisList :editais="editaisFavoritos" @toggle-favorito="toggleFavorito" @edital-selected="showEditalDetails" />
         </TabPanel>
       </TabPanels>
     </Tabs>

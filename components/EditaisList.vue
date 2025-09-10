@@ -10,6 +10,7 @@ defineProps<{
 
 const emit = defineEmits<{
   (e: 'toggle-favorito', id: number): void
+  (e: 'edital-selected', edital: any): void
 }>();
 
 function getStatusSeverity(status: string) {
@@ -30,11 +31,12 @@ function getStatusSeverity(status: string) {
       dataKey="id" 
       class="p-datatable-sm" 
       responsiveLayout="scroll"
-      :show-headers="false"
-    >
+      :show-headers="false">
+
+      
       <Column>
         <template #body="slotProps">
-          <div class="edital-card flex justify-between items-start p-4">
+          <div class="edital-card flex justify-between items-start p-4" @click="emit('edital-selected', slotProps.data)">
             
             <div class="flex-grow">
               <div class="grid grid-cols-1 md:grid-cols-4 gap-x-6 gap-y-2 text-sm mb-3">
@@ -95,6 +97,7 @@ function getStatusSeverity(status: string) {
   border-bottom: 1px solid #f3f4f6; 
   transition: all 0.2s ease-in-out;
   overflow: hidden; 
+  cursor: pointer;
 }
 
 ::v-deep(.p-datatable-tbody > tr:last-child .edital-card) {

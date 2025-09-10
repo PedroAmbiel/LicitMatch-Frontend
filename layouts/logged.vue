@@ -6,6 +6,8 @@ const loadingStore = useLoadingStore();
 const mobileSidebarVisible = ref(false);
 const isSidebarMinimized = ref(true);
 
+provide('isSidebarMinimized', readonly(isSidebarMinimized));
+
 function toggleDesktopSidebar() {
   isSidebarMinimized.value = !isSidebarMinimized.value;
 }
@@ -44,9 +46,9 @@ function toggleDesktopSidebar() {
     </Sidebar>
 
       <main 
-        class="flex-1 transition-all duration-300 ease-in-out"
+        class="flex-1 transition-all duration-300 ease-in-out overflow-x-hidden"
       >
-      <div class="p-4 md:p-6 lg:p-8">
+      <div class="p-4 md:p-6 lg:p-8 h-screen overflow-y-auto">
         <header class="flex items-center gap-4 mb-4">
             <Button
               icon="pi pi-bars"
