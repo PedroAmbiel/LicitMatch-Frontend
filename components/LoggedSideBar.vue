@@ -8,11 +8,18 @@ const emit = defineEmits<{
 }>();
 
 const route = useRoute();
+const router = useRouter()
+const user = userStore()
+
+function logoff(){
+  user.$reset()
+  router.push('/public')
+}
 
 const menuItems = [
-  { icon: 'pi pi-th-large', label: 'Dashboard', to: '/pagina_inicial' },
-  { icon: 'pi pi-file', label: 'Todos os Editais', to: '/editais'},
-  { icon: 'pi pi-briefcase', label: 'Minhas Licitações', to: '/minhas_licitacoes'},
+  { icon: 'pi pi-th-large', label: 'Dashboard', to: '/main/pagina_inicial' },
+  { icon: 'pi pi-file', label: 'Todos os Editais', to: '/main/editais'},
+  { icon: 'pi pi-briefcase', label: 'Minhas Licitações', to: '/main/minhas_licitacoes'},
   { icon: 'pi pi-calendar', label: 'Calendário', to: '/' },
 ];
 
@@ -60,7 +67,7 @@ const footerMenuItems = [
 
     <div class="p-4 mt-auto border-t border-blue-800">
       <ul class="space-y-2">
-        <li v-for="item in footerMenuItems" :key="item.label">
+        <li v-for="item in footerMenuItems" :key="item.label" @click="item.label == 'Sair' ? logoff() : null">
           <NuxtLink
             :to="item.to"
             class="flex items-center gap-3 p-3 rounded-md transition-colors duration-200 hover:bg-blue-800"

@@ -74,9 +74,9 @@
             <template #footer>
               <div class="text-center text-sm text-gray-600">
                 Não tem uma conta? 
-                <a href="#" class="text-blue-600 hover:text-blue-800 font-semibold transition-colors">
+                <NuxtLink to="/public/auth/cadastro_usuario" class="text-blue-600 hover:text-blue-800 font-semibold transition-colors">
                   Cadastre-se
-                </a>
+                </NuxtLink>
               </div>
             </template>
           </Card>
@@ -153,6 +153,7 @@ import { ref, computed } from 'vue'
 import { useToast } from 'primevue/usetoast'
 
 const toast = useToast()
+const user = userStore()
 
 const email = ref('')
 const password = ref('')
@@ -204,10 +205,50 @@ const handleLogin = async () => {
     })
     return
   }
+  try{
 
-  loading.value = false
+    const requestBody =  ref({
+      email : email.value,
+      senha : password.value
+    })
 
-  useRouter().push("/pagina_inicial")
+    const resp = await $fetch('/api/licitmatch/user-login', {
+      method: 'POST',
+      body: requestBody.value
+    })
+
+    user.logarUsuario(resp)
+
+    useRouter().push("/main/pagina_inicial")
+
+  } catch (error) {
+    
+    if (error.statusCode === 400) {
+      toast.add({
+        severity: 'error',
+        summary: 'Erro ao realizar acesso',
+        detail: 'Email ou senha estão incorretos',
+        life: 5000
+      })
+    } else if(error.statusCode == 500) {
+      toast.add({
+        severity: 'error',
+        summary: 'Serviço Indisponível',
+        detail: 'Não foi possível finalizar seu pedido. Tente novamente mais tarde.',
+        life: 5000
+      })
+    } else {
+      toast.add({
+        severity: 'error',
+        summary: 'Erro no login',
+        detail: 'Ocorreu um erro ao processar seu login. Tente novamente.',
+        life: 5000
+      })
+    }
+  } finally {
+    loading.value = false
+  }
+
   
 }
 

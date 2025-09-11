@@ -1,13 +1,18 @@
 import { defineStore } from 'pinia'
+import type { NewUser } from '~/interfaces/NewUserInterface';
+import type { User } from '~/interfaces/UserInterface';
 
 export const userStore = defineStore('userStore', {
-  state: () => ({ 
-    idUsuario: 10,
-    nome: null,
-    responsavel: null,
-    perfil: null,
-    email: null,
-  }),
+  state: () => { 
+    return{
+      idUsuario: null as Number | null,
+      nomePessoa: null as String | null,
+      ativo : null as Boolean | null,
+      nomeEmpresa: null as String | null,
+      idEmpresa: null as Number | null,
+      email: null as String | null,
+    }
+  },
   persist:{
     storage: piniaPluginPersistedstate.localStorage(),
     afterHydrate: (ctx) =>{
@@ -19,16 +24,33 @@ export const userStore = defineStore('userStore', {
   },
   actions: {
 
-  isAutenticado(){
-    if(this.idUsuario){
-      return true
-    }else{
-      return false
-    }
-  },
+    logarUsuario(dadosUsuario : User){
+      this.idUsuario = dadosUsuario.idUsuario
+      this.idEmpresa = dadosUsuario.idEmpresa || null
+      this.nomeEmpresa = dadosUsuario.nomeEmpresa || null
+      this.nomePessoa = dadosUsuario.nomePessoa
+      this.ativo = dadosUsuario.ativo
+      this.email = dadosUsuario.email
+    },
 
-  limparUserStore(){
-    this.$reset()
-  },
+    isAutenticado(){
+      if(this.idUsuario != null){
+        return true
+      }else{
+        return false
+      }
+    },
+
+    verificarSeEstaVinculadoAEmpresa() : boolean{
+      if(this.idEmpresa != null){
+        return true
+      }else{
+        return false
+      }
+    },
+
+    limparUserStore() : void{
+      this.$reset()
+    },
 
 }})

@@ -16,7 +16,7 @@ const stats = ref([
 <template>
   <div class="p-4 sm:p-6 md:p-8">
     <h1 class="text-4xl font-bold text-blue-900 mb-8">
-      Bem-vindo(a), Pedro!
+      Bem-vindo(a), {{userStore().nomePessoa}}!
     </h1>
 
     <div 
