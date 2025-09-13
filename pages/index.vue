@@ -2,7 +2,7 @@
   <div class="hero">
     <nav class="menu">
       <ul>
-          <li><NuxtLink class="login-button" to="/segunda_tela">
+          <li><NuxtLink class="login-button" to="segunda_tela">
               Sobre nós
             </NuxtLink></li>
         <li><a href="#">Contato</a></li>

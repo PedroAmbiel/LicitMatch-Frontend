@@ -6,6 +6,17 @@ import Password from 'primevue/password';
 import Panel from 'primevue/panel';
 import Image from 'primevue/image';
 import { NuxtImg } from '#components';
+// IMPORTS DAS IMAGENS
+import agilidade from '../assets/images/agilidade.png'
+import transparencia from '../assets/images/transparencia.png'
+//import organizacao from '../assets/images/opotunidade.png'
+//import eficiencia from '../assets/images/eficiencia.png'
+//import confiabilidade from '../assets/images/confiabilidade.png'
+//import conexao from '../assets/images/conexao.png'
+//import controle from '../assets/images/controle.png'
+import oportunidade from '../assets/images/oportunidade.png'
+
+
 const value = ref("")
 
 interface Card {
@@ -14,14 +25,14 @@ interface Card {
 }
 
 const cards: Card[] = [
-  { title: "Agilidade", icon: "/assets/icons/agilidade.png" },
-  { title: "Transparência", icon: "/assets/images/transparencia.png" },
-  { title: "Organização", icon: "/assets/icons/organizacao.png" },
-  { title: "Eficiência", icon: "/assets/icons/eficiencia.png" },
-  { title: "Confiabilidade", icon: "/assets/icons/confiabilidade.png" },
-  { title: "Conexão", icon: "/assets/icons/conexao.png" },
-  { title: "Controle", icon: "/assets/icons/controle.png" },
-  { title: "Oportunidade", icon: "/assets/icons/oportunidade.png" }
+  { title: "Agilidade", icon: agilidade },
+  { title: "Transparência", icon: transparencia },
+  //{ title: "Organização", icon: organizacao },
+  //{ title: "Eficiência", icon: eficiencia },
+  //{ title: "Confiabilidade", icon: confiabilidade },
+  //{ title: "Conexão", icon: conexao },
+  //{ title: "Controle", icon: controle },
+  { title: "Oportunidade", icon: oportunidade }
 ]
 </script>
 
@@ -43,14 +54,14 @@ const cards: Card[] = [
         </p>
       </div>
       <div class="about-logo">
-        <img src="/assets/images/licitmatch.png" alt="LicitMatch Logo" />
+        <img src="../assets/images/licitmatch.png" alt="LicitMatch Logo" />
       </div>
     </section>
 
     <!-- Seção de Valores -->
     <section class="values">
       <div v-for="card in cards" :key="card.title" class="card">
-        <NuxtImg :src="card.icon" :alt="card.title" />
+        <img :src="card.icon"/>
         <h3>{{ card.title }}</h3>
         <NuxtLink to="/" class="back-link">Voltar para a Home</NuxtLink>
       </div>
