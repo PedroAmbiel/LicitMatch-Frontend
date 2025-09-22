@@ -9,8 +9,8 @@ defineProps<{
 }>();
 
 const emit = defineEmits<{
-  (e: 'toggle-favorito', id: number): void
-  (e: 'edital-selected', edital: any): void
+  (e: 'toggle-favorito', id: string): void
+  (e: 'edital-selected', edital: any, isFavorito : boolean): void
 }>();
 
 function getStatusSeverity(status: string) {
@@ -27,7 +27,7 @@ function getStatusSeverity(status: string) {
 <template>
   <div class="datatable-container">
     <DataTable 
-      :value="editais" 
+      :value="editais"
       dataKey="id" 
       class="p-datatable-sm" 
       responsiveLayout="scroll"
@@ -36,9 +36,9 @@ function getStatusSeverity(status: string) {
       
       <Column>
         <template #body="slotProps">
-          <div class="edital-card flex justify-between items-start p-4" @click="emit('edital-selected', slotProps.data)">
+          <div class="edital-card flex justify-between items-start p-4">
             
-            <div class="flex-grow">
+            <div class="flex-grow" @click="emit('edital-selected', slotProps.data, slotProps.data.isFavorito)">
               <div class="grid grid-cols-1 md:grid-cols-4 gap-x-6 gap-y-2 text-sm mb-3">
                 <div><strong>Órgão:</strong> <span class="text-blue-600 font-semibold">{{ slotProps.data.orgao }}</span></div>
                 <div><strong>Status:</strong> <Tag :value="slotProps.data.status" :severity="getStatusSeverity(slotProps.data.status)" /></div>

@@ -1,38 +1,141 @@
 <script setup lang="ts">
+import { ref, computed, onMounted } from 'vue';
+import { useLoadingStore } from '@/stores/loadingStore';
 
 definePageMeta({
   layout: 'logged',
-})
+});
 
 
+interface Edital {
+  id: string;
+  orgao: string;
+  status: string;
+  modalidade: string;
+  data: string;
+  edital: string;
+  uf: string;
+  local: string;
+  objeto: string;
+  isFavorito: boolean;
+  isDestaque: boolean;
+}
 
-const allEditais = ref([
-  { id: 1, orgao: 'Prefeitura de Santa Bárbara do Sul', status: 'Recebendo Proposta', modalidade: 'Concorrência Eletrônica', data: '05/09/2025', edital: '006/2025', uf: 'RS', local: 'Santa Bárbara do Sul', objeto: 'Contratação de Empresa Especializada...', isFavorito: true, isDestaque: true, },
-  { id: 2, orgao: 'Prefeitura de Caxias do Sul', status: 'Aberto', modalidade: 'Pregão Eletrônico', data: '12/10/2025', edital: '102/2025', uf: 'RS', local: 'Caxias do Sul', objeto: 'Aquisição de equipamentos de informática...', isFavorito: false, isDestaque: true, },
-  { id: 3, orgao: 'Secretaria de Educação de Porto Alegre', status: 'Em Andamento', modalidade: 'Tomada de Preços', data: '20/09/2025', edital: '034/2025', uf: 'RS', local: 'Porto Alegre', objeto: 'Reforma e ampliação da Escola Municipal...', isFavorito: true, isDestaque: false, },
-  { id: 4, orgao: 'Prefeitura de Gramado', status: 'Finalizado', modalidade: 'Convite', data: '01/08/2025', edital: '055/2025', uf: 'RS', local: 'Gramado', objeto: 'Contratação de serviços de decoração natalina...', isFavorito: false, isDestaque: false, },
-]);
+interface EditalDetalhado {
+  id : string
+  pncpIdentificador: string;
+  nomeUnidade: string;
+  status: string;
+  modalidade: string;
+  dataInclusao: string;
+  edital: string;
+  ufSigla: string;
+  municipioNome: string;
+  descricaoContratacao: string;
+  inicioPropostas : string;
+  fimPropostas : string;
+  modoDisputa : string;
+  situacaoPncp : string;
+  isRegistroPreco : boolean;
+  linkEdital : string;
+  isFavorito: boolean;
+  isDestaque: boolean;
+}
+
+const loadingStore = useLoadingStore();
+const pagina = ref(1);
+const qtdRegistros = ref(10);
+
+const allEditais = ref<Edital[]>([]);
+
+async function fetchEditais() {
+  try {
+    loadingStore.show();
+
+    const response = await $fetch<any[]>('/api/licitmatch/listar-contratos-minimo', {
+      query: {
+        'paginacao': pagina.value,
+        'qtdRegistros': qtdRegistros.value
+      },
+    });
+
+    if (Array.isArray(response)) {
+      const editaisMapeados = response.map((contrato): Edital => {
+        return {
+          id: contrato.pncpIdentificador,
+          orgao: contrato.nomeUnidade,
+          status: 'Não informado',
+          modalidade: contrato.modalidade,
+          data: new Date(contrato.dataInclusao).toLocaleDateString('pt-BR'),
+          edital: '',
+          uf: contrato.ufSigla,
+          local: contrato.municipioNome,
+          objeto: contrato.descricaoContratacao,
+          isFavorito: false,
+          isDestaque: false,
+        };
+      });
+      allEditais.value = editaisMapeados;
+    } else {
+      console.error("A resposta da API não é um array:", response);
+    }
+  } catch (error) {
+    console.error("Erro ao buscar editais:", error);
+  } finally {
+    loadingStore.hide();
+  }
+}
+
+onMounted(() => {
+  fetchEditais();
+});
 
 
 const activeTab = ref('todos');
 
-const editaisDestaque = computed(() => allEditais.value.filter(e => e.isDestaque));
-const editaisFavoritos = computed(() => allEditais.value.filter(e => e.isFavorito));
-
+const editaisDestaque = computed(() => allEditais.value.filter((e: Edital) => e.isDestaque));
+const editaisFavoritos = computed(() => allEditais.value.filter((e: Edital) => e.isFavorito));
 
 const isDetailSidebarVisible = ref(false);
-const selectedEdital = ref<any>(null);
+const selectedEdital = ref<EditalDetalhado | null>(null);
 
-function toggleFavorito(id: number) {
-  const edital = allEditais.value.find(e => e.id === id);
+function toggleFavorito(id: string) {
+  const edital = allEditais.value.find((e: Edital) => e.id === id);
   if (edital) {
     edital.isFavorito = !edital.isFavorito;
   }
 }
 
-function showEditalDetails(edital: any) {
-  selectedEdital.value = edital;
+async function showEditalDetails(edital: Edital, isFavorito : boolean) {
   isDetailSidebarVisible.value = true;
+  selectedEdital.value = null;
+
+  try {
+    loadingStore.isLoading = true;
+    
+    const editalDetalhado = await buscarEditalDetalhado(edital.id);
+
+    editalDetalhado.isFavorito = isFavorito;
+
+    selectedEdital.value = editalDetalhado;
+
+  } catch (error) {
+    console.error("Falha ao buscar detalhes do edital:", error);
+    isDetailSidebarVisible.value = false; 
+  } finally {
+    loadingStore.isLoading = false;
+  }
+}
+
+async function buscarEditalDetalhado(idEdital: string): Promise<EditalDetalhado> {
+  const response = await $fetch<EditalDetalhado>('/api/licitmatch/listar-detalhes-contrato', {
+    method: 'GET',
+    query: {
+      'idPncp': idEdital,
+    },
+  });
+
+  return response;
 }
 </script>
 

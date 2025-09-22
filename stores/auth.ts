@@ -1,5 +1,4 @@
 import { defineStore } from 'pinia'
-import type { NewUser } from '~/interfaces/NewUserInterface';
 import type { User } from '~/interfaces/UserInterface';
 
 export const userStore = defineStore('userStore', {
