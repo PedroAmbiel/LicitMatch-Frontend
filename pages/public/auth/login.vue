@@ -219,7 +219,7 @@ const handleLogin = async () => {
 
     user.logarUsuario(resp)
 
-    useRouter().push("/main/pagina_inicial")
+    useRouter().push("/main/dashboard")
 
   } catch (error) {
     

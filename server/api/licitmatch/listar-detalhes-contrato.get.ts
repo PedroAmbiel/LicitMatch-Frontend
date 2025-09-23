@@ -8,7 +8,7 @@ export default defineEventHandler(async (event) => {
       'idPncp' : idPncp
     },
     onResponse({ request, response, options }) {
-      console.log("[onResponse]: ", response._data)
+      //console.log("[onResponse]: ", response._data)
     },
     onResponseError({ request, response, options }) {
       console.log("[onResponseError]: ", response._data[0])

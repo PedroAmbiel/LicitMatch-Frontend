@@ -4,7 +4,7 @@ const props = defineProps<{
 }>();
 
 const emit = defineEmits<{
-  (e: 'toggle'): void
+  (e: 'toggle', condition: boolean): void
 }>();
 
 const route = useRoute();
@@ -12,12 +12,12 @@ const router = useRouter()
 const user = userStore()
 
 function logoff(){
-  user.$reset()
+  user.limparUserStore()
   router.push('/public')
 }
 
 const menuItems = [
-  { icon: 'pi pi-th-large', label: 'Dashboard', to: '/main/pagina_inicial' },
+  { icon: 'pi pi-th-large', label: 'Dashboard', to: '/main/dashboard' },
   { icon: 'pi pi-file', label: 'Todos os Editais', to: '/main/editais'},
   { icon: 'pi pi-briefcase', label: 'Minhas Licitações', to: '/main/minhas_licitacoes'},
   { icon: 'pi pi-calendar', label: 'Calendário', to: '/' },
@@ -39,7 +39,7 @@ const footerMenuItems = [
       </NuxtLink>
 
       <button
-        @click="emit('toggle')"
+        @click="emit('toggle', !isMinimized)"
         class="p-2 rounded-full hover:bg-blue-800 focus:outline-none focus:ring-none focus:ring-blue-500"
         aria-label="Alternar menu"
       >
@@ -51,6 +51,7 @@ const footerMenuItems = [
       <ul class="space-y-2">
         <li v-for="item in menuItems" :key="item.label" >
           <NuxtLink
+            @click="emit('toggle', true)"
             :to="item.to"
             class="flex items-center gap-3 p-3 rounded-md transition-colors duration-200 hover:bg-blue-800"
             :class="[isMinimized ? 'justify-center' : '']"
@@ -69,6 +70,7 @@ const footerMenuItems = [
       <ul class="space-y-2">
         <li v-for="item in footerMenuItems" :key="item.label" @click="item.label == 'Sair' ? logoff() : null">
           <NuxtLink
+            @click="emit('toggle', true)"
             :to="item.to"
             class="flex items-center gap-3 p-3 rounded-md transition-colors duration-200 hover:bg-blue-800"
             :class="[isMinimized ? 'justify-center' : '']"

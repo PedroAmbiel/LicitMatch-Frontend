@@ -10,6 +10,7 @@ export const userStore = defineStore('userStore', {
       nomeEmpresa: null as String | null,
       idEmpresa: null as Number | null,
       email: null as String | null,
+      isAuthenticated: null as Boolean | null,
     }
   },
   persist:{
@@ -24,6 +25,7 @@ export const userStore = defineStore('userStore', {
   actions: {
 
     logarUsuario(dadosUsuario : User){
+      this.isAuthenticated = true
       this.idUsuario = dadosUsuario.idUsuario
       this.idEmpresa = dadosUsuario.idEmpresa || null
       this.nomeEmpresa = dadosUsuario.nomeEmpresa || null

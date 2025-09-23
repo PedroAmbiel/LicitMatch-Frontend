@@ -2,11 +2,11 @@
   <div class="hero">
     <nav class="menu">
       <ul>
-          <li><NuxtLink class="login-button" to="/segunda_tela">
+          <li><NuxtLink class="login-button" to="/public/segunda_tela">
               Sobre nós
             </NuxtLink></li>
         <li><a href="#">Contato</a></li>
-        <li><a class="login-button" href="#">Área Logada</a></li>
+        <li><NuxtLink class="login-button" to="/public/auth/login">Área Logada</NuxtLink></li>
         
       </ul>
     </nav>

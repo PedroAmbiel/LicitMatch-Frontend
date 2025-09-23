@@ -8,8 +8,8 @@ const isSidebarMinimized = ref(true);
 
 provide('isSidebarMinimized', readonly(isSidebarMinimized));
 
-function toggleDesktopSidebar() {
-  isSidebarMinimized.value = !isSidebarMinimized.value;
+function toggleDesktopSidebar(condition : boolean) {
+  isSidebarMinimized.value = condition;
 }
 </script>
 

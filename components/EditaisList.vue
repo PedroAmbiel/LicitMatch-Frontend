@@ -26,13 +26,15 @@ function getStatusSeverity(status: string) {
 
 <template>
   <div class="datatable-container">
-    <DataTable 
+    <DataTable
       :value="editais"
       dataKey="id" 
       class="p-datatable-sm" 
       responsiveLayout="scroll"
       :show-headers="false">
-
+      <template #empty>
+          <p class="p-4 text-slate-500 text-center">Nenhum edital encontrado</p>
+      </template>
       
       <Column>
         <template #body="slotProps">
@@ -48,7 +50,7 @@ function getStatusSeverity(status: string) {
                 <div><strong>UF:</strong> {{ slotProps.data.uf }}</div>
                 <div><strong>Local:</strong> {{ slotProps.data.local }}</div>
               </div>
-              <p class="text-gray-600 text-sm">
+              <p class="text-gray-600 text-sm text-justify">
                 <strong>Objeto:</strong> {{ slotProps.data.objeto }}
               </p>
             </div>

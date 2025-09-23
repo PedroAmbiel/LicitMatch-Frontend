@@ -42,6 +42,8 @@ interface EditalDetalhado {
   isDestaque: boolean;
 }
 
+const toast = useToast();
+
 const loadingStore = useLoadingStore();
 const pagina = ref(1);
 const qtdRegistros = ref(10);
@@ -80,7 +82,12 @@ async function fetchEditais() {
       console.error("A resposta da API não é um array:", response);
     }
   } catch (error) {
-    console.error("Erro ao buscar editais:", error);
+    toast.add({
+        severity: 'error',
+        summary: 'Serviço indisponível',
+        detail: 'Não foi possível consultar os editais disponíveis',
+        life: 15000
+      })
   } finally {
     loadingStore.hide();
   }
@@ -140,6 +147,8 @@ async function buscarEditalDetalhado(idEdital: string): Promise<EditalDetalhado>
 </script>
 
 <template>
+
+  <Toast position="top-right" />
     
     <Sidebar
       v-model:visible="isDetailSidebarVisible"

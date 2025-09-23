@@ -16,6 +16,7 @@ export default defineNuxtConfig({
   image:{
     dir: "assets/",
   },
+  ssr: false,
   primevue: {
     options: {
       theme: {

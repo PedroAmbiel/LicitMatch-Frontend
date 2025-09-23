@@ -45,7 +45,7 @@
     <div class="flex-grow p-4 overflow-y-auto">
       <div class="mb-6">
         <h3 class="font-bold text-lg mb-2">Objeto da Contratação</h3>
-        <p class="text-sm text-gray-600 leading-relaxed">{{ edital.descricaoContratacao }}</p>
+        <p class="text-sm text-gray-600 leading-relaxed text-justify">{{ edital.descricaoContratacao }}</p>
       </div>
       
       <div class="flex items-center gap-3">
