@@ -3,14 +3,18 @@ import DataTable from 'primevue/datatable';
 import Column from 'primevue/column';
 import Button from 'primevue/button';
 import Tag from 'primevue/tag';
+import type { PageState } from 'primevue';
 
 defineProps<{
   editais: Array<any>
+  numTotalEditais : number
 }>();
+
 
 const emit = defineEmits<{
   (e: 'toggle-favorito', id: string): void
   (e: 'edital-selected', edital: any, isFavorito : boolean): void
+  (e: 'trocar-pagina', event: PageState) : void
 }>();
 
 function getStatusSeverity(status: string) {
@@ -31,11 +35,18 @@ function getStatusSeverity(status: string) {
       dataKey="id" 
       class="p-datatable-sm" 
       responsiveLayout="scroll"
-      :show-headers="false">
+      :show-headers="false"
+      paginator
+      :rows="10"
+      paginator-position="top">
       <template #empty>
           <p class="p-4 text-slate-500 text-center">Nenhum edital encontrado</p>
       </template>
       
+      <template #paginatorcontainer>
+        <Paginator @page="emit('trocar-pagina', $event)" :rows="10" :totalRecords="numTotalEditais" :rowsPerPageOptions="[10, 20, 30]" />
+    </template>
+
       <Column>
         <template #body="slotProps">
           <div class="edital-card flex justify-between items-start p-4">

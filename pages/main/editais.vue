@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue';
 import { useLoadingStore } from '@/stores/loadingStore';
+import type { PageState } from 'primevue';
 
 definePageMeta({
   layout: 'logged',
@@ -45,49 +46,49 @@ interface EditalDetalhado {
 const toast = useToast();
 
 const loadingStore = useLoadingStore();
-const pagina = ref(1);
+const pagina = ref(0);
 const qtdRegistros = ref(10);
 
 const allEditais = ref<Edital[]>([]);
+const totalEditaisEncontrados = ref(0)
 
 async function fetchEditais() {
   try {
     loadingStore.show();
 
-    const response = await $fetch<any[]>('/api/licitmatch/listar-contratos-minimo', {
-      query: {
+    const response = await $fetch<any>('/api/licitmatch/listar-contratos-minimo', {
+       query: {
         'paginacao': pagina.value,
         'qtdRegistros': qtdRegistros.value
       },
     });
+    
+    const editaisMapeados = response.data.map((contrato): Edital => {
+      return {
+        id: contrato.pncpIdentificador,
+        orgao: contrato.nomeUnidade,
+        status: 'Não informado',
+        modalidade: contrato.modalidade,
+        data: new Date(contrato.dataInclusao).toLocaleDateString('pt-BR'),
+        edital: '',
+        uf: contrato.ufSigla,
+        local: contrato.municipioNome,
+        objeto: contrato.descricaoContratacao,
+        isFavorito: false,
+        isDestaque: false,
+      };
+    });
 
-    if (Array.isArray(response)) {
-      const editaisMapeados = response.map((contrato): Edital => {
-        return {
-          id: contrato.pncpIdentificador,
-          orgao: contrato.nomeUnidade,
-          status: 'Não informado',
-          modalidade: contrato.modalidade,
-          data: new Date(contrato.dataInclusao).toLocaleDateString('pt-BR'),
-          edital: '',
-          uf: contrato.ufSigla,
-          local: contrato.municipioNome,
-          objeto: contrato.descricaoContratacao,
-          isFavorito: false,
-          isDestaque: false,
-        };
-      });
-      allEditais.value = editaisMapeados;
-    } else {
-      console.error("A resposta da API não é um array:", response);
-    }
+    totalEditaisEncontrados.value = response.totalRegistros;
+    allEditais.value = editaisMapeados;
+ 
   } catch (error) {
     toast.add({
         severity: 'error',
         summary: 'Serviço indisponível',
         detail: 'Não foi possível consultar os editais disponíveis',
         life: 15000
-      })
+    });
   } finally {
     loadingStore.hide();
   }
@@ -144,6 +145,11 @@ async function buscarEditalDetalhado(idEdital: string): Promise<EditalDetalhado>
 
   return response;
 }
+
+function trocarPagina(event: PageState): void {
+  pagina.value = event.page;
+  fetchEditais();
+}
 </script>
 
 <template>
@@ -192,13 +198,14 @@ async function buscarEditalDetalhado(idEdital: string): Promise<EditalDetalhado>
 
       <TabPanels class="rounded-tr-2xl rounded-br-2xl rounded-bl-2xl">
         <TabPanel value="todos">
-          <EditaisList :editais="allEditais" @toggle-favorito="toggleFavorito" @edital-selected="showEditalDetails" />
+          <EditaisList :editais="allEditais" @toggle-favorito="toggleFavorito" 
+            @trocar-pagina="trocarPagina" :num-total-editais="totalEditaisEncontrados" @edital-selected="showEditalDetails" />
         </TabPanel>
         <TabPanel value="destaques">
-          <EditaisList :editais="editaisDestaque" @toggle-favorito="toggleFavorito" @edital-selected="showEditalDetails"  />
+          <EditaisList :editais="editaisDestaque" @toggle-favorito="toggleFavorito" :num-total-editais="editaisDestaque.length" @edital-selected="showEditalDetails"  />
         </TabPanel>
         <TabPanel value="favoritos">
-          <EditaisList :editais="editaisFavoritos" @toggle-favorito="toggleFavorito" @edital-selected="showEditalDetails" />
+          <EditaisList :editais="editaisFavoritos" @toggle-favorito="toggleFavorito" :num-total-editais="editaisFavoritos.length" @edital-selected="showEditalDetails" />
         </TabPanel>
       </TabPanels>
     </Tabs>
