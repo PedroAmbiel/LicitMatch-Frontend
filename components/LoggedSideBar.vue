@@ -33,7 +33,7 @@ const footerMenuItems = [
 <template>
   <div class="h-full flex flex-col bg-blue-900 text-white">
     <div class="p-4 flex items-center border-b border-blue-800" :class="[isMinimized ? 'justify-center' : 'justify-between']">
-      <NuxtLink to="/pagina_inicial" v-if="!isMinimized" class="flex items-center gap-3">
+      <NuxtLink to="/main/dashboard" v-if="!isMinimized" class="flex items-center gap-3">
         <img src="/assets/images/licit_logo_branco.png" alt="Logo" class="h-8 flex-shrink-0" />
         <span class="text-xl font-semibold whitespace-nowrap">Licit Match</span>
       </NuxtLink>

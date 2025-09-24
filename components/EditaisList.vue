@@ -5,9 +5,10 @@ import Button from 'primevue/button';
 import Tag from 'primevue/tag';
 import type { PageState } from 'primevue';
 
-defineProps<{
-  editais: Array<any>
-  numTotalEditais : number
+const props = defineProps<{
+  editais: Array<any>,
+  numTotalEditais : number,
+  numTotalPorPagina : number,
 }>();
 
 
@@ -37,16 +38,32 @@ function getStatusSeverity(status: string) {
       responsiveLayout="scroll"
       :show-headers="false"
       paginator
-      :rows="10"
+      :rows="numTotalPorPagina"
       paginator-position="top">
       <template #empty>
           <p class="p-4 text-slate-500 text-center">Nenhum edital encontrado</p>
       </template>
       
-      <template #paginatorcontainer>
-        <Paginator @page="emit('trocar-pagina', $event)" :rows="10" :totalRecords="numTotalEditais" :rowsPerPageOptions="[10, 20, 30]" />
+    <template #paginatorcontainer >
+      <Paginator @page="emit('trocar-pagina', $event)" class="p-2" :rows="numTotalPorPagina" 
+        :totalRecords="numTotalEditais" :rowsPerPageOptions="[10, 20, 30]"
+        :pt = "{
+          page:  ({ context }) => ({
+            class: context.active ? '!bg-[#4081e9] !text-white' : 'bg-transparent text-black' + ' hover:!bg-[#78a9f8]', 
+          }),
+          pcRowPerPageDropdown: {
+            root: 'focus:!border-none',
+            option: ({ context }) => ({class: context.selected ? '!bg-[#4081e9] !text-white' : '' + 'hover:!bg-[#78a9f8]'}),
+          }
+        }" />
     </template>
-
+    
+    <div class="mt-4 w-full max-w-2xl mx-auto rounded-lg bg-gray-100 px-4 py-2 text-center
+      text-sm sm:text-base md:text-lg font-medium text-gray-800 shadow-sm">
+      Editais encontrados:
+      <span class="font-semibold text-[#4081e9]">{{ numTotalEditais }}</span>
+    </div>
+    
       <Column>
         <template #body="slotProps">
           <div class="edital-card flex justify-between items-start p-4">
@@ -57,7 +74,7 @@ function getStatusSeverity(status: string) {
                 <div><strong>Status:</strong> <Tag :value="slotProps.data.status" :severity="getStatusSeverity(slotProps.data.status)" /></div>
                 <div><strong>Modalidade:</strong> <span class="text-blue-600 font-semibold">{{ slotProps.data.modalidade }}</span></div>
                 <div><strong>Data:</strong> <span class="text-blue-600 font-semibold">{{ slotProps.data.data }}</span></div>
-                <div><strong>Edital:</strong> {{ slotProps.data.edital }}</div>
+                <div><strong>Edital:</strong> {{ slotProps.data.id }}</div>
                 <div><strong>UF:</strong> {{ slotProps.data.uf }}</div>
                 <div><strong>Local:</strong> {{ slotProps.data.local }}</div>
               </div>

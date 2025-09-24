@@ -148,6 +148,7 @@ async function buscarEditalDetalhado(idEdital: string): Promise<EditalDetalhado>
 
 function trocarPagina(event: PageState): void {
   pagina.value = event.page;
+  qtdRegistros.value = event.rows;
   fetchEditais();
 }
 </script>
@@ -198,14 +199,14 @@ function trocarPagina(event: PageState): void {
 
       <TabPanels class="rounded-tr-2xl rounded-br-2xl rounded-bl-2xl">
         <TabPanel value="todos">
-          <EditaisList :editais="allEditais" @toggle-favorito="toggleFavorito" 
+          <EditaisList :editais="allEditais" @toggle-favorito="toggleFavorito" :num-total-por-pagina="qtdRegistros" 
             @trocar-pagina="trocarPagina" :num-total-editais="totalEditaisEncontrados" @edital-selected="showEditalDetails" />
         </TabPanel>
         <TabPanel value="destaques">
-          <EditaisList :editais="editaisDestaque" @toggle-favorito="toggleFavorito" :num-total-editais="editaisDestaque.length" @edital-selected="showEditalDetails"  />
+          <EditaisList :editais="editaisDestaque" @toggle-favorito="toggleFavorito" :num-total-por-pagina="qtdRegistros" :num-total-editais="editaisDestaque.length" @edital-selected="showEditalDetails"  />
         </TabPanel>
         <TabPanel value="favoritos">
-          <EditaisList :editais="editaisFavoritos" @toggle-favorito="toggleFavorito" :num-total-editais="editaisFavoritos.length" @edital-selected="showEditalDetails" />
+          <EditaisList :editais="editaisFavoritos" @toggle-favorito="toggleFavorito" :num-total-por-pagina="qtdRegistros" :num-total-editais="editaisFavoritos.length" @edital-selected="showEditalDetails" />
         </TabPanel>
       </TabPanels>
     </Tabs>

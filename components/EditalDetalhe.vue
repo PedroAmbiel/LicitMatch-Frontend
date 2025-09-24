@@ -37,8 +37,8 @@
       </div>
 
       <div class="mt-4 flex justify-between text-sm bg-gray-50 p-3 rounded-md">
-        <p>Início Propostas: <span class="font-bold">{{ new Date(edital.inicioPropostas).toLocaleDateString('pt-BR') }}</span></p>
-        <p>Fim Propostas: <span class="font-bold">{{ new Date(edital.fimPropostas).toLocaleDateString('pt-BR') }}</span></p>
+        <p>Início Propostas: <span class="font-bold">{{ edital.inicioPropostas ? new Date(edital.inicioPropostas).toLocaleDateString('pt-BR') : 'Sem Informação' }}</span></p>
+        <p>Fim Propostas: <span class="font-bold">{{ edital.fimPropostas ? new Date(edital.fimPropostas).toLocaleDateString('pt-BR') : 'Sem Informação' }}</span></p>
       </div>
     </header>
 
