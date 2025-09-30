@@ -2,6 +2,7 @@
 
 definePageMeta({
   layout: 'logged',
+  middleware: 'empresa-check',
 })
 
 const isSidebarMinimized = inject('isSidebarMinimized', ref(true));

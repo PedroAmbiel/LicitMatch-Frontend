@@ -22,6 +22,12 @@ export const userStore = defineStore('userStore', {
       ctx.store.$state.refreshExpireOn = new Date(ctx.store.$state.refreshExpireOn);
     }
   },
+
+  getters: {
+    hasEmpresa: (state) => !!state.idEmpresa,
+    isUserAuthenticated: (state) => !!state.isAuthenticated,
+  },
+
   actions: {
 
     logarUsuario(dadosUsuario : User){
@@ -42,6 +48,17 @@ export const userStore = defineStore('userStore', {
       }
     },
 
+    setEmpresa(id : number, nome : string) {
+      this.idEmpresa = id
+      this.nomeEmpresa = nome
+      useUiStore().fecharDialogEmpresaRequerida()
+    },
+
+    clearEmpresa() {
+      this.idEmpresa = null
+      this.nomeEmpresa = null
+    },
+
     verificarSeEstaVinculadoAEmpresa() : boolean{
       if(this.idEmpresa != null){
         return true
@@ -54,4 +71,37 @@ export const userStore = defineStore('userStore', {
       this.$reset()
     },
 
-}})
+    async vincularEmpresa(codigo : number, senha : string) {
+      try {
+        const response = await $fetch<Empresa>('/api/empresa/vincular', {
+          method: 'POST',
+          body: {
+            codigo_convite: codigo,
+            senha_convite: senha,
+            usuario_id: this.idUsuario
+          }
+        })
+
+        if (response.success) {
+          this.setEmpresa(
+            response.idEmpresa,
+            response.razaoSocial
+          )
+          return { success: true }
+        }
+        
+        return { success: false, message: response.message }
+      } catch (error) {
+        return { success: false, message: 'Erro ao vincular empresa' }
+      }
+    }
+  },
+
+})
+
+interface Empresa {
+  idEmpresa : number,
+  razaoSocial : string,
+  success : boolean,
+  message : string
+}

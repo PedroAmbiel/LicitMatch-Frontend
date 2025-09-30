@@ -6,7 +6,7 @@ export default defineNuxtRouteMiddleware((to, from) => {
         return navigateTo('/public')
     }
 
-    if(to.path.startsWith('/public/auth/') && userStore().isAuthenticated){
+    if(to.path == '/public/auth/login' && userStore().isAuthenticated){
         console.log("[USERSTORE]: ", userStore().isAuthenticated);
         return navigateTo('/main/dashboard')
     }

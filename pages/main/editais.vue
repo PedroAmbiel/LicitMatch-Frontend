@@ -5,6 +5,7 @@ import type { PageState } from 'primevue';
 
 definePageMeta({
   layout: 'logged',
+  middleware: 'empresa-check',
 });
 
 

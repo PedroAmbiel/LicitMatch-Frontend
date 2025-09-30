@@ -2,14 +2,15 @@
 
 definePageMeta({
   layout: 'logged',
+  middleware: 'empresa-check',
 })
 
 const stats = ref([
-  { value: '32', title: 'Editais com Potencial', colorClass: 'text-gray-800' },
-  { value: '15', title: 'Licitações Inscritas', colorClass: 'text-gray-500' },
-  { value: '04', title: 'Licitações em Andamento', colorClass: 'text-orange-500' },
-  { value: '09', title: 'Licitações Perdidas', colorClass: 'text-green-500' },
-  { value: '02', title: 'Licitações Vencidas', colorClass: 'text-red-500' },
+  { value: '00', title: 'Editais com Potencial', colorClass: 'text-gray-800' },
+  { value: '00', title: 'Licitações Inscritas', colorClass: 'text-gray-500' },
+  { value: '00', title: 'Licitações em Andamento', colorClass: 'text-orange-500' },
+  { value: '00', title: 'Licitações Perdidas', colorClass: 'text-green-500' },
+  { value: '00', title: 'Licitações Vencidas', colorClass: 'text-red-500' },
 ]);
 </script>
 

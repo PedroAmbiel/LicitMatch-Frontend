@@ -8,12 +8,12 @@ const emit = defineEmits<{
 }>();
 
 const route = useRoute();
-const router = useRouter()
-const user = userStore()
+const router = useRouter();
+const user = userStore();
 
 function logoff(){
-  user.limparUserStore()
-  router.push('/public')
+  user.limparUserStore();
+  router.push('/public');
 }
 
 const menuItems = [
@@ -67,6 +67,16 @@ const footerMenuItems = [
     </nav>
 
     <div class="p-4 mt-auto border-t border-blue-800">
+
+      <div class="p-3 mb-2 flex items-center gap-3 text-gray-200" :class="[isMinimized ? 'justify-center' : '']" v-tooltip="isMinimized ? user.nomeEmpresa : ``">
+        <i class="pi pi-building text-xl flex-shrink-0"></i>
+        <Transition name="fade">
+            <div v-if="!isMinimized" class="flex flex-col leading-tight">
+                <span class="text-xs font-light">Empresa</span>
+                <span class="whitespace-nowrap font-semibold">{{ user.nomeEmpresa }}</span>
+            </div>
+        </Transition>
+      </div>
       <ul class="space-y-2">
         <li v-for="item in footerMenuItems" :key="item.label" @click="item.label == 'Sair' ? logoff() : null">
           <NuxtLink
@@ -77,9 +87,9 @@ const footerMenuItems = [
             active-class="bg-blue-800"
           >
             <i :class="[item.icon, 'text-xl flex-shrink-0']"></i>
-             <Transition name="fade">
-              <span v-if="!isMinimized" class="whitespace-nowrap">{{ item.label }}</span>
-            </Transition>
+              <Transition name="fade">
+                <span v-if="!isMinimized" class="whitespace-nowrap">{{ item.label }}</span>
+              </Transition>
           </NuxtLink>
         </li>
       </ul>
@@ -90,7 +100,7 @@ const footerMenuItems = [
 <style scoped>
 .fade-enter-active,
 .fade-leave-active {
-  transition: opacity ease;
+  transition: opacity 0.2s ease; /* Adjusted timing for a smoother feel */
 }
 
 .fade-enter-from,

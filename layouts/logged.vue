@@ -11,12 +11,17 @@ provide('isSidebarMinimized', readonly(isSidebarMinimized));
 function toggleDesktopSidebar(condition : boolean) {
   isSidebarMinimized.value = condition;
 }
+
+
 </script>
 
 <template>
   <div>
+
     <GlobalLoading v-if="loadingStore.isLoading" />
     
+    <EmpresaRequeridaDialog />
+
     <div class="flex min-h-screen bg-gray-100 text-gray-800">
       <aside
         class="hidden md:flex flex-col transition-all duration-300 ease-in-out"
