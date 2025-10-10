@@ -12,7 +12,7 @@
     </nav>
     <div class="overlay">
       <div class="content">
-        <img src="/assets/images/licitmatch.png" alt="LicitMatch Logo" class="logo" />
+        <img src="/assets/images/licitmatch1.png" alt="LicitMatch Logo" class="logo" />
         <h1>CONTE COM A LICITMATCH!</h1>
         <p>
           Temos o compromisso de proporcionar a melhor experiência de contratação entre
