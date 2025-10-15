@@ -12,7 +12,7 @@
           <i class="pi pi-file-edit text-blue-600 text-3xl"></i>
           <div>
             <h2 class="font-bold text-lg text-gray-800">{{ edital.nomeUnidade }}</h2>
-            <p class="text-sm text-gray-500">Edital Nº: {{ edital.edital }}</p>
+            <p class="text-sm text-gray-500">Edital Nº: {{ edital.pncpIdentificador }}</p>
           </div>
         </div>
         <div class="flex items-center">
@@ -57,10 +57,27 @@
           </a>
         </div>
       </div>
+
+      <div class="mt-6">
+        <div class="flex items-center gap-3 mb-3">
+          <i class="pi pi-list-check text-xl text-blue-600"></i>
+          <h3 class="font-bold">Requisitos</h3>
+        </div>
+        <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
+          <p class="text-sm text-gray-700 leading-relaxed">
+            <i class="pi pi-info-circle text-blue-600 mr-2"></i>
+            Publicação te interessou? Efetue a Inscrição e acesse a <NuxtLink to="/main/minhas_licitacoes" class="font-semibold underline text-blue-700">página de acompanhamento</NuxtLink>
+          </p>
+        </div>
+      </div>
     </div>
 
+    
+
+
     <footer class="p-4 mt-auto border-t border-gray-200">
-      <Button label="Efetuar Inscrição" class="w-full !bg-blue-700 !hover:bg-blue-800 !border-none" />
+      <Button label="Efetuar Inscrição" class="w-full !bg-blue-700 !hover:bg-blue-800 !border-none" 
+      @click="$emit('inscricao', edital.pncpIdentificador)" />
     </footer>
 
   </div>
