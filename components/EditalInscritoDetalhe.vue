@@ -1,11 +1,11 @@
 <template>
-
   <div v-if="loading" class="p-4">
     <Skeleton height="2rem" class="mb-2"></Skeleton>
     <Skeleton height="10rem"></Skeleton>
   </div>
-
+  
   <div v-else-if="edital" class="h-full flex flex-col text-gray-700 p-2 relative">
+
     
     <header class="p-4 border-b border-gray-200">
       <div class="flex justify-between items-start">
@@ -66,7 +66,7 @@
               :auto="false"
               :customUpload="true"
               @select="confirmarUpload"
-              chooseLabel="Enviar Arquivos"
+              chooseLabel="Enviar Arquivo"
               chooseIcon="pi pi-upload"
               severity="info"
               class="p-button-sm"
@@ -87,6 +87,11 @@
           </div>
         </div>
         
+        <div class="w-[100%] text-center py-5" :class="totalRequisitosCompletos == edital.requisitos.length ? `bg-green-300` : ``" 
+            v-if="edital.requisitos.length != 0">
+          <small class="font-bold">Total Completo: {{ totalRequisitosCompletos }} / {{ edital.requisitos.length }}</small>
+        </div>
+        
         <div v-if="edital.requisitos && edital.requisitos.length > 0">
           <DataTable :value="edital.requisitos" stripedRows size="small" class="p-datatable-sm">
             <Column header="Concluído?" headerStyle="width: 3rem" bodyClass="text-center">
@@ -95,19 +100,29 @@
                   <Checkbox 
                     v-model="slotProps.data.isCompleto" 
                     :binary="true"
-                    @change="onRequisitoChange(slotProps.data)"
+                    @value-change="onRequisitoChange(slotProps.data)"
                   />
                 </div>
               </template>
             </Column>
+
             <Column field="descricaoRequisito" header="Descrição"></Column>
-            <Column header="Registro">
+
+            <Column header="Ações" bodyClass="text-center">
               <template #body="slotProps">
-                <div class="text-xs text-gray-600">
-                  <p>{{ new Date(slotProps.data.dataInclusao).toLocaleDateString('pt-BR') }}</p>
-                  <p>por 
-                    <small class="underline font-bold">{{ slotProps.data.nomeCadastrou == 'SISTEMA' ? 'Gerado Automaticamente' : slotProps.data.nomeCadastrou }}</small>
-                  </p>
+                <div class="flex flex-col justify-center gap-2">
+                  <Button
+                    icon="pi pi-exclamation-circle"
+                    severity="info"
+                    class="hover:!scale-110 transition-transform"
+                    @click="verDetalhes(slotProps.data)"
+                  />
+
+                  <Button
+                    icon="pi pi-trash"
+                    class="bg-red-500 border-none hover:!bg-red-600 hover:!scale-105 transition-all"
+                    @click="confirmarRemocao(slotProps.data)"
+                  />
                 </div>
               </template>
             </Column>
@@ -149,15 +164,29 @@
     </template>
   </Dialog>
 
+  <Dialog v-model:visible="dialogRequisitoDados" header="Detalhes do Registro" modal class="w-[22rem]">
+    <div v-if="requisitoSelecionado" class="text-sm space-y-2">
+      <p><strong>Data de Inclusão:</strong> {{ new Date(requisitoSelecionado.dataInclusao).toLocaleDateString('pt-BR') }}</p>
+      <p>
+        <strong>Cadastrado por: </strong>
+        <span>
+          {{ requisitoSelecionado.nomeCadastrou === 'SISTEMA' ? 'Gerado automaticamente' : requisitoSelecionado.nomeCadastrou }}
+        </span>
+      </p>
+    </div>
+  </Dialog>
+
   <ConfirmDialog></ConfirmDialog>
 </template>
 
 <script setup lang="ts">
-
 const user = userStore();
 const toast = useToast();
 const loadingStore = useLoadingStore();
 const confirm = useConfirm();
+
+const dialogRequisitoDados = ref(false)
+const requisitoSelecionado = ref<Requisito>()
 
 interface Requisito {
   idRequisito: string; 
@@ -219,26 +248,99 @@ const fecharDialog = () => {
   dialogVisivel.value = false;
 };
 
-const onRequisitoChange = (requisito: Requisito) => {
-  // Aqui você pode adicionar lógica adicional quando o checkbox mudar
-  // Por exemplo, salvar no backend
+const totalRequisitosCompletos = computed(() => {
+  let requisitos = [...props.edital!.requisitos];
+
+  return requisitos.filter((req) => req.isCompleto == true).length;
+});
+
+function verDetalhes(requisito : Requisito) {
+  requisitoSelecionado.value = requisito
+  dialogRequisitoDados.value = true
+}
+
+const confirmarRemocao = (requisito : Requisito) => {
+  confirm.require({
+    message: `Tem certeza que deseja remover "${requisito.descricaoRequisito.toUpperCase()}"?`,
+    header: 'Confirmar Remoção',
+    icon: 'pi pi-exclamation-triangle',
+    acceptLabel: 'Sim',
+    rejectLabel: 'Cancelar',
+    acceptClass: 'bg-red-500 hover:!bg-red-600 !border-none hover:!border-none hover:!scale-105 transition-all',
+    rejectClass: 'bg-gray-300 text-gray-800 !border-none hover:!bg-gray-400 hover:!border-none hover:!scale-105 transition-all',
+    accept: () => {
+      removerRequisito(Number(requisito.idRequisito))
+      toast.add({ severity: 'success', summary: 'Removido', detail: 'Requisito removido com sucesso', life: 2000 })
+    }
+  })
+}
+
+const onRequisitoChange = async (requisito: Requisito) => {
+  try {
+
+    const response = await $fetch<any>('/api/licitmatch/alterar-estado-completo-requisito', {
+      method: 'PUT',
+      body: {
+        'idEmpresaContratoRequisito' : requisito.idRequisito,
+        'isCompleto' : requisito.isCompleto,
+      },
+    });
+
+    console.log(response);
+
+  } catch (error) {
+    requisito.isCompleto = !requisito.isCompleto;
+
+    console.error("Erro ao buscar editais:", error);
+    toast.add({
+        severity: 'error',
+        summary: 'Serviço indisponível',
+        detail: 'Erro ao atualizar o requisito',
+        life: 15000
+    });
+  }
+  
   console.log('Requisito atualizado:', requisito);
 };
+
+const removerRequisito = async (idRequisito : number) =>{
+   try {
+
+    const response = await $fetch<any>('/api/licitmatch/remover-requisito', {
+      method: 'DELETE',
+      query: {
+        'idRequisito' : idRequisito,
+      },
+    });
+
+    emit('consultar_novamente', props.edital!.pncpIdentificador);
+
+  } catch (error) {
+
+    console.error("Erro ao remover requisito:", error);
+    toast.add({
+        severity: 'error',
+        summary: 'Serviço indisponível',
+        detail: 'Erro ao remover requisito',
+        life: 15000
+    });
+  }
+
+}
 
 const confirmarUpload = (event: any) => {
   confirm.require({
     message: 'Ao submeter um arquivo, serão gerados automaticamente os requisitos do edital informado! Essa ação deixará o sistema em estado de espera!',
     header: 'Confirmação de Upload',
     icon: 'pi pi-exclamation-triangle',
-    acceptLabel: 'Sim, Confirmar',
+    acceptLabel: 'Sim',
     rejectLabel: 'Cancelar',
-    acceptClass: 'p-button-success',
-    rejectClass: 'p-button-danger',
+    acceptClass: 'bg-red-500 hover:bg-red-600 !border-none hover:!border-none hover:!scale-105 transition-all',
+    rejectClass: 'bg-gray-300 text-gray-800 !border-none hover:!bg-gray-400 hover:!border-none hover:!scale-105 transition-all',
     accept: () => {
       handleFileUpload(event);
     },
     reject: () => {
-      // Limpar o arquivo selecionado
       if (fileUploadRef.value) {
         fileUploadRef.value.clear();
       }
@@ -246,7 +348,7 @@ const confirmarUpload = (event: any) => {
   });
 };
 
-const salvarRequisito = () => {
+const salvarRequisito = async () => {
   if (!props.edital || !novoRequisito.value.descricao.trim()) {
     toast.add({
       severity: 'warn',
@@ -265,7 +367,31 @@ const salvarRequisito = () => {
     nomeCadastrou: user.nomePessoa!.toString(),
   };
 
-  props.edital.requisitos.push(requisitoParaAdicionar);
+  try {
+
+    const response = await $fetch<any>('/api/licitmatch/adicionar-novo-requisito', {
+      method: 'POST',
+      body: {
+        'idEmpresaContrato' : props.edital!.idEmpresaContrato,
+        'descricaoRequisito' : requisitoParaAdicionar.descricaoRequisito,
+        'isCompleto' : requisitoParaAdicionar.isCompleto,
+        'idUsuarioCadastro' : user.idUsuario,
+      },
+    });
+
+    console.log(response);
+
+    emit('consultar_novamente', props.edital!.pncpIdentificador);
+
+  } catch (error) {
+    console.error("Erro ao cadastrar novo requisito:", error);
+    toast.add({
+        severity: 'error',
+        summary: 'Serviço indisponível',
+        detail: 'Erro ao atualizar o requisito',
+        life: 15000
+    });
+  }
   
   toast.add({
     severity: 'success',
@@ -319,7 +445,6 @@ const handleFileUpload = async (event : any) => {
     });
   } finally {
     loadingStore.isLoading = false;
-    // Limpar o arquivo após o upload
     if (fileUploadRef.value) {
       fileUploadRef.value.clear();
     }
@@ -332,3 +457,9 @@ function getStatusSeverity(status: string) {
   return 'info';
 }
 </script>
+
+<style scoped>
+  .p-confirmdialog {
+    max-width: 300px !important;
+  }
+</style>
