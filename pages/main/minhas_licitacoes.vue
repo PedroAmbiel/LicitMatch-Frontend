@@ -5,88 +5,366 @@ definePageMeta({
   middleware: 'empresa-check',
 })
 
-const isSidebarMinimized = inject('isSidebarMinimized', ref(true));
+interface Edital {
+  id: string;
+  orgao: string;
+  status: string;
+  modalidade: string;
+  data: string;
+  edital: string;
+  uf: string;
+  local: string;
+  objeto: string;
+}
 
-const colunas = ref([
-  {
-    id: 'pre-selecionados',
-    title: 'Pré-Selecionados',
-    color: 'border-cyan-500',
-    cards: [
-      { id: 1, orgao: 'Prefeitura de Santa Bárbara do Sul', modalidade: 'Concorrência Eletrônica', status: 'Recebendo Proposta', data: '05/09/2025' },
-      { id: 2, orgao: 'Prefeitura de Caxias do Sul', modalidade: 'Pregão Eletrônico', status: 'Análise de Documentos', data: '12/10/2025' },
-    ]
-  },
-  {
-    id: 'apuracao',
-    title: 'Apuração dos Documentos',
-    color: 'border-purple-500',
-    cards: [
-      { id: 3, orgao: 'Secretaria de Educação de POA', modalidade: 'Tomada de Preços', status: 'Em Análise de Documentos', data: '15/09/2025' },
-      { id: 4, orgao: 'Prefeitura de Gramado', modalidade: 'Convite', status: 'Aguardando Prazo', data: '20/11/2025' },
-      { id: 5, orgao: 'Governo do Estado do RS', modalidade: 'Concorrência Pública', status: 'Documentação OK', data: '01/10/2025' },
-    ]
-  },
-  {
-    id: 'construcao',
-    title: 'Construção da Proposta',
-    color: 'border-amber-500',
-    cards: [
-      { id: 6, orgao: 'Prefeitura de Santa Bárbara do Sul', modalidade: 'Concorrência Eletrônica', status: 'Em Elaboração', data: '05/09/2025' },
-    ]
-  },
-  {
-    id: 'acompanhamento',
-    title: 'Acompanhamento pós-envio',
-    color: 'border-green-500',
-    cards: [
-      { id: 7, orgao: 'Prefeitura de Porto Alegre', modalidade: 'Tomada de Preços', status: 'Aguardando Resultado', data: '30/09/2025' },
-    ]
-  },
-]);
+interface Requisito {
+  idRequisito: string; 
+  nomeCadastrou: string;
+  dataInclusao: string;
+  descricaoRequisito: string;
+  isCompleto: boolean;
+}
+
+interface EditalDetalhado {
+  idEmpresaContrato : number;
+  pncpIdentificador: string;
+  nomeUnidade: string;
+  ufNome: string;
+  ufSigla: string;
+  municipioNome: string;
+  modalidade: string;
+  dataInclusao: string;
+  descricaoContratacao: string;
+  
+
+  modoDisputa: string;
+  situacaoPncp: string;
+  isRegistroPreco: boolean;
+  inicioPropostas: string; 
+  fimPropostas: string;
+  
+  linkEdital: string;
+  
+  requisitos: Requisito[];
+}
+
+
+const editais = ref<Edital[]>([]);
+const visualizacao = ref<'cards' | 'lista'>('cards');
+const ordenacao = ref('data');
+const loadingStore = useLoadingStore();
+const toast = useToast();
+const user = userStore();
+const isDetailSidebarVisible = ref(false);
+const selectedEdital = ref<EditalDetalhado | null>(null);
+
+async function fetchEditais() {
+  try {
+    loadingStore.show();
+
+    const response = await $fetch<any>('/api/licitmatch/listar-contratos-inscritos', {
+        query: {
+          'idEmpresa' : user.idEmpresa,
+          'situacao' : 'PRE_SELECAO'
+        },
+    });
+
+    console.log(response);
+
+    const editaisMapeados = response.data.map((contrato): Edital => {
+      return {
+        id: contrato.pncpIdentificador,
+        orgao: contrato.nomeUnidade,
+        status: contrato.situacao,
+        modalidade: contrato.modalidade,
+        data: new Date(contrato.dataInscricao).toLocaleDateString('pt-BR'),
+        edital: '',
+        uf: contrato.ufSigla,
+        local: contrato.municipioNome,
+        objeto: contrato.descricaoContratacao,
+      };
+    });
+
+    editais.value = editaisMapeados;
+
+  } catch (error) {
+    console.error("Erro ao buscar editais:", error);
+    toast.add({
+        severity: 'error',
+        summary: 'Serviço indisponível',
+        detail: 'Não foi possível consultar os editais disponíveis',
+        life: 15000
+    });
+  } finally {
+    loadingStore.hide();
+  }
+}
+
+
+onMounted(() => {
+  fetchEditais();
+});
+
+
+const editaisFiltrados = computed(() => {
+  let result = [...editais.value];
+  
+  if (ordenacao.value === 'data') {
+    result.sort((a, b) => {
+        const dateA = a.data.split('/').reverse().join('-');
+        const dateB = b.data.split('/').reverse().join('-');
+        return new Date(dateB).getTime() - new Date(dateA).getTime();
+    });
+  } else if (ordenacao.value === 'orgao') {
+    result.sort((a, b) => a.orgao.localeCompare(b.orgao));
+  } else if (ordenacao.value === 'modalidade') {
+    result.sort((a, b) => a.modalidade.localeCompare(b.modalidade));
+  }
+  
+  return result;
+});
+
+const estatisticas = computed(() => {
+  const total = editais.value.length;
+  return { total };
+});
+
+async function mostrarDetalhes(id: string) {
+  selectedEdital.value = null;
+  isDetailSidebarVisible.value = true;
+
+  try {
+    loadingStore.isLoading = true;
+
+    const editalDetalhado = await buscarEditalDetalhado(id);
+
+    selectedEdital.value = editalDetalhado;
+    console.log("Requisitos" , selectedEdital.value.requisitos)
+    
+  } catch (error) {
+    console.error("Falha ao buscar detalhes do edital:", error);
+    isDetailSidebarVisible.value = false; 
+  } finally {
+    loadingStore.isLoading = false;
+  }
+}
+
+async function buscarEditalDetalhado(idEdital: string): Promise<EditalDetalhado> {
+  const response = await $fetch<EditalDetalhado>('/api/licitmatch/listar-detalhes-contrato-inscrito', {
+    method: 'GET',
+    query: {
+      'idPncp': idEdital,
+      'idEmpresa' : user.idEmpresa
+    },
+  });
+
+  return response;
+}
+
 </script>
 
 <template>
-  <div class="p-4 sm:p-6 md:p-8 h-full flex flex-col bg-slate-50">
-    <header class="flex justify-between items-center mb-6 flex-shrink-0 flex-wrap gap-4">
-      <h1 class="text-3xl lg:text-4xl font-bold text-blue-900">
-        Minhas Licitações
-      </h1>
-      <div class="flex items-center gap-2">
-        <Button label="Filtrar" icon="pi pi-filter" severity="secondary" text />
-        <Button label="Ordenar" icon="pi pi-sort" severity="secondary" text />
-        <Button icon="pi pi-th-large" severity="secondary" text aria-label="Visualização" />
-      </div>
-    </header>
 
-    <div class="flex-grow flex gap-6 overflow-x-hidden pb-4 px-1">
+  <Toast />
 
-      <div 
-        v-for="coluna in colunas" 
-        :key="coluna.id"
-        class="flex-shrink-0 transition-all duration-75"
-        :class="isSidebarMinimized ? `w-96` : `w-80`"
-      >
-        <div 
-          :class="coluna.color"
-          class="flex items-center justify-between p-4 bg-white rounded-t-lg border-t-4 shadow-sm"
-        >
-          <div class="flex items-center gap-3">
-            <h3 class="font-bold text-gray-800">{{ coluna.title }}</h3>
-            <span class="bg-slate-200 text-slate-600 text-xs font-semibold px-2 py-1 rounded-full">
-              {{ coluna.cards.length }}
-            </span>
+  <Sidebar
+    v-model:visible="isDetailSidebarVisible"
+    position="right"
+    class="!w-2/4"
+    :pt="{
+      mask: { class: 'bg-black/10 backdrop-blur-sm' },
+      header: { class: 'hidden' },
+      content: { class: 'p-0' }
+    }">
+    <EditalInscritoDetalhe 
+      :edital="selectedEdital"
+      @close="isDetailSidebarVisible = false"
+      @consultar_novamente="mostrarDetalhes"
+    />
+  </Sidebar>
+
+  <div class="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100">
+    <div class="bg-white shadow-sm border-b sticky top-0 z-40">
+      <div class="px-4 sm:px-6 lg:px-8 py-4">
+        <div class="flex justify-between items-center">
+          <div>
+            <h1 class="text-2xl lg:text-3xl font-bold text-slate-900">
+              Meus Editais de Interesse
+            </h1>
+            <p class="text-slate-600 mt-1">Gerencie todos os editais que você marcou como interesse</p>
           </div>
         </div>
+      </div>
+    </div>
 
-        <div class="p-4 bg-white rounded-b-lg shadow-sm space-y-4">
-           <CardAcompanhamentoLicitacao
-            v-for="card in coluna.cards"
-            :key="card.id"
-            :licitacao="card"
+    <div class="px-4 sm:px-6 lg:px-8 py-6">
+      <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+        <Card class="border-0 shadow-sm hover:shadow-md transition-shadow">
+          <template #content>
+            <div class="flex items-center justify-between">
+              <div>
+                <p class="text-slate-500 text-sm">Total de Editais</p>
+                <p class="text-2xl font-bold text-slate-900">{{ estatisticas.total }}</p>
+              </div>
+              <div class="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
+                <i class="pi pi-briefcase text-blue-600 text-xl"></i>
+              </div>
+            </div>
+          </template>
+        </Card>
+      </div>
+
+      <div class="flex flex-wrap justify-between items-center gap-4 mb-6">
+        <div /> <div class="flex gap-2">
+          <Dropdown
+            v-model="ordenacao"
+            :options="[
+              { label: 'Data de Inscrição', value: 'data' },
+              { label: 'Órgão', value: 'orgao' },
+              { label: 'Modalidade', value: 'modalidade' }
+            ]"
+            optionLabel="label"
+            optionValue="value"
+            placeholder="Ordenar por"
+            class="w-48"
           />
+          
+          <ButtonGroup>
+            <Button
+              icon="pi pi-th-large"
+              @click="visualizacao = 'cards'"
+              :severity="visualizacao === 'cards' ? 'primary' : 'secondary'"
+              :outlined="visualizacao !== 'cards'"
+            />
+            <Button
+              icon="pi pi-bars"
+              @click="visualizacao = 'lista'"
+              :severity="visualizacao === 'lista' ? 'primary' : 'secondary'"
+              :outlined="visualizacao !== 'lista'"
+            />
+          </ButtonGroup>
         </div>
       </div>
+
+      <div class="text-center">
+        <p v-if="editaisFiltrados.length === 0" class="text-slate-500 py-20">
+          Nenhum edital encontrado nos seus interesses.
+        <p v-if="editais.length === 0">
+          Efetue a inscrição em editais na página de <NuxtLink to="/main/editais" class="font-semibold underline text-blue-700">visualização de editais</NuxtLink>.
+        </p>
+        </p>
       </div>
+
+      <div v-if="visualizacao === 'cards'" class="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4">
+        <Card 
+          v-for="edital in editaisFiltrados"
+          :key="edital.id"
+          class="border-0 shadow-sm hover:shadow-lg transition-all cursor-pointer group"
+        >
+          <template #header>
+            <div class="px-6 pt-6 pb-2">
+              <div class="flex justify-between items-start mb-3">
+                <Tag 
+                  :value="edital.modalidade"
+                  severity="info"
+                  class="font-medium"
+                />
+                 <Tag 
+                  :value="edital.status.toUpperCase()"
+                  severity="success"
+                  class="text-xs"
+                />
+              </div>
+              <h3 class="font-bold text-lg text-slate-900 mb-1 group-hover:text-blue-600 transition-colors">
+                {{ edital.orgao }}
+              </h3>
+              <p class="text-sm text-slate-600">{{ edital.local }} - {{ edital.uf }}</p>
+            </div>
+          </template>
+          
+          <template #content>
+            <div class="space-y-4">
+              <p class="text-sm text-slate-700 line-clamp-3">{{ edital.objeto }}</p>
+              
+              <div class="flex justify-between items-center text-sm pt-2 border-t">
+                  <span class="text-slate-500">Data de Inscrição:</span>
+                  <span class="font-medium text-slate-800">{{ edital.data }}</span>
+              </div>
+            </div>
+          </template>
+          
+          <template #footer>
+            <div class="flex gap-2">
+              <Button 
+                label="Ver Detalhes" 
+                icon="pi pi-eye" 
+                severity="secondary" 
+                text 
+                class="flex-1"
+                @click="mostrarDetalhes(edital.id)"
+              />
+            </div>
+          </template>
+        </Card>
+      </div>
+
+      <DataTable 
+        v-else
+        :value="editaisFiltrados"
+        class="shadow-sm"
+        :rowHover="true"
+        stripedRows
+        paginator :rows="10"
+        responsiveLayout="scroll"
+      >
+
+        <Column field="objeto" header="Órgão" sortable >
+          <template #body="{ data }">
+            <p class="text-sm p-3">{{ data.orgao }}</p>
+          </template>
+        </Column>
+
+        <Column field="objeto" header="Objeto" class="max-w-md">
+          <template #body="{ data }">
+            <p class="text-sm">{{ data.objeto }}</p>
+          </template>
+        </Column>
+        <Column field="modalidade" header="Modalidade" sortable />
+        <Column field="local" header="Local" sortable>
+          <template #body="{ data }">
+            {{ data.local }} - {{ data.uf }}
+          </template>
+        </Column>
+        <Column field="data" header="Data de Inscrição" sortable />
+        <Column>
+          <template #body="{ data }">
+            <Button 
+              icon="pi pi-eye" 
+              severity="secondary" 
+              text 
+              rounded
+              @click="mostrarDetalhes(data.id)"
+            />
+          </template>
+        </Column>
+      </DataTable>
+    </div>
   </div>
 </template>
+
+<style scoped>
+.line-clamp-2 {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  line-clamp : 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.line-clamp-3 {
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  line-clamp : 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+</style>
