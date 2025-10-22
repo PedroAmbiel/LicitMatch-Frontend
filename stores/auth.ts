@@ -73,12 +73,11 @@ export const userStore = defineStore('userStore', {
 
     async vincularEmpresa(codigo : number, senha : string) {
       try {
-        const response = await $fetch<Empresa>('/api/empresa/vincular', {
-          method: 'POST',
-          body: {
-            codigo_convite: codigo,
-            senha_convite: senha,
-            usuario_id: this.idUsuario
+        const response = await $fetch<Empresa>('/api/licitmatch/buscar-empresa-por-codigo', {
+          method: 'GET',
+          query: {
+            "codigo": codigo,
+            "senha": senha,
           }
         })
 

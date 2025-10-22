@@ -1,14 +1,14 @@
 <template>
 
   <Dialog
-    v-model:visible="uiStore.isEmpresaRequeridaDialogVisible" 
-    modal 
-    :closable="false"
-    :closeOnEscape="false"
-    :header="false"
-    :style="{ width: '550px' }"
-    :breakpoints="{'960px': '75vw', '640px': '90vw'}"
-    class="empresa-dialog"
+  v-model:visible="uiStore.isEmpresaRequeridaDialogVisible" 
+  modal 
+  :closable="false"
+  :closeOnEscape="false"
+  :header="false"
+  :style="{ width: '550px' }"
+  :breakpoints="{'960px': '75vw', '640px': '90vw'}"
+  class="empresa-dialog"
   >
     <template #header>
       <div class="w-full text-center">
@@ -66,7 +66,7 @@
       </div>
     </div>
 
-    <div v-else class="space-y-4">
+    <div v-else-if="!empresa" class="space-y-4">
       <Button 
         label="Voltar" 
         icon="pi pi-arrow-left"
@@ -120,21 +120,68 @@
         icon="pi pi-check"
         @click="handleAccessEmpresa"
         class="w-full bg-blue-500 hover:bg-blue-600 text-white"
-        :loading="loading"
+        :loading="loadingStoreImport.isLoading"
       />
+    </div>
+
+    <div v-else class="space-y-6">
+      <div class="text-center">
+        <div class="inline-flex items-center justify-center w-20 h-20 bg-green-100 rounded-full mb-4">
+          <i class="pi pi-check-circle text-4xl text-green-600"></i>
+        </div>
+        <h3 class="text-xl font-bold text-gray-800 mb-2">Empresa Encontrada!</h3>
+      </div>
+
+      <div class="bg-gray-50 border border-gray-200 rounded-xl p-6">
+        <div class="flex items-center justify-center mb-3">
+          <i class="pi pi-building text-blue-600 text-2xl mr-3"></i>
+          <h4 class="text-2xl font-bold text-gray-800">{{ empresa.nomeEmpresa }}</h4>
+        </div>
+        <p class="text-center text-gray-600">
+          Código: <span class="font-semibold">{{ accessData.codigo }}</span>
+        </p>
+      </div>
+
+      <div class="bg-yellow-50 border-l-4 border-yellow-500 p-4 rounded">
+        <p class="text-sm text-yellow-800">
+          <i class="pi pi-exclamation-triangle mr-2"></i>
+          Confirme se esta é realmente a empresa que deseja acessar
+        </p>
+      </div>
+
+      <div class="flex gap-3">
+        <Button 
+          label="Cancelar" 
+          icon="pi pi-times"
+          @click="resetForm"
+          outlined
+          class="flex-1"
+          severity="secondary"
+        />
+        <Button 
+          label="Confirmar Acesso" 
+          icon="pi pi-check"
+          @click="handleConfirmarAcesso"
+          class="flex-1 bg-green-500 hover:bg-green-600 text-white"
+          :loading="loadingStoreImport.isLoading"
+        />
+      </div>
     </div>
   </Dialog>
 </template>
 
-<script setup>
-
+<script setup lang="ts">
 const router = useRouter()
 const { vincularEmpresa } = useUseEmpresa()
 const loadingStoreImport = useLoadingStore()
 const uiStore = useUiStore()
+const user = userStore()
+const toast = useToast()
 
 const visible = ref(true)
 const showAccessForm = ref(false)
+
+const empresa = ref<Empresa | null>(null)
 
 const accessData = reactive({
   codigo: '',
@@ -145,6 +192,40 @@ const errors = reactive({
   codigo: '',
   senha: ''
 })
+
+const resetForm = () => {
+  showAccessForm.value = false
+  empresa.value = null
+  accessData.codigo = ''
+  accessData.senha = ''
+  errors.codigo = ''
+  errors.senha = ''
+}
+
+const handleConfirmarAcesso = async () => {
+
+  try {
+    loadingStoreImport.isLoading = true
+
+
+    const response = await $fetch('/api/licitmatch/vincular-empresa-usuario', {
+      method: 'PUT',
+      body: {
+        "idEmpresa": empresa.value?.idEmpresa,
+        "idUsuario": user.idUsuario,
+      }
+    })
+
+    user.setEmpresa(empresa.value!.idEmpresa, empresa.value!.nomeEmpresa)
+    uiStore.fecharDialogEmpresaRequerida()
+
+  } catch (error) {
+    console.error('Erro ao acessar empresa:', error)
+  } finally {
+    loadingStoreImport.isLoading = false
+  }
+
+}
 
 const validateAccessForm = () => {
   let isValid = true
@@ -178,21 +259,34 @@ const handleAccessEmpresa = async () => {
   loadingStoreImport.isLoading = true
 
   try {
-    const success = await vincularEmpresa(accessData.codigo, accessData.senha)
-    
-    if (success) {
-      uiStore.fecharDialogEmpresaRequerida
+
+      const response = await $fetch<Empresa>('/api/licitmatch/buscar-empresa-por-codigo', {
+        method: 'GET',
+        query: {
+          "codigo": accessData.codigo,
+          "senha": accessData.senha,
+        }
+      })
       
-      setTimeout(() => {
-        window.location.reload()
-      }, 1000)
-    }
+      if(!response){
+        toast.add({severity:'error', summary:'Erro', detail:'Empresa não encontrada. Verifique o código e a senha e tente novamente.', life: 5000})
+      }else{
+        empresa.value = response
+      }
+
+        
   } catch (error) {
     console.error('Erro ao acessar empresa:', error)
   } finally {
     loadingStoreImport.isLoading = false
   }
 }
+
+interface Empresa {
+  idEmpresa: number
+  nomeEmpresa : string
+}
+
 </script>
 
 <style scoped>

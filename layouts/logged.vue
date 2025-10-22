@@ -17,7 +17,7 @@ function toggleDesktopSidebar(condition : boolean) {
 
 <template>
   <div>
-
+    <Toast />
     <GlobalLoading v-if="loadingStore.isLoading" />
     
     <EmpresaRequeridaDialog />
