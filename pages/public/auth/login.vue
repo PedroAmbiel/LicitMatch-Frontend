@@ -218,6 +218,7 @@ const handleLogin = async () => {
     })
 
     user.logarUsuario(resp)
+    console.log(user)
 
     useRouter().push("/main/dashboard")
 
