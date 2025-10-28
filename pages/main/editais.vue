@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue';
+import { ref, computed, onMounted, watch } from 'vue'; // NOVO: 'watch' foi adicionado (embora já estivesse no seu import)
 import { useLoadingStore } from '@/stores/loadingStore';
 import type { PageState } from 'primevue';
 
@@ -104,16 +104,81 @@ onMounted(() => {
 
 const activeTab = ref('todos');
 
-const editaisDestaque = computed(() => allEditais.value.filter((e: Edital) => e.isDestaque));
-const editaisFavoritos = computed(() => allEditais.value.filter((e: Edital) => e.isFavorito));
+const editaisDestaque = ref<Edital[]>([]);
+const editaisFavoritos = computed(() => {
+  const favoritosTodos = allEditais.value.filter((e: Edital) => e.isFavorito);
+  const favoritosDestaque = editaisDestaque.value.filter((e: Edital) => e.isFavorito);
+  const todosIds = new Set(favoritosTodos.map(f => f.id));
+  const favoritosUnicos = [...favoritosTodos, ...favoritosDestaque.filter(f => !todosIds.has(f.id))];
+  return favoritosUnicos;
+});
+
+
+const isLoadingDestaques = ref(false);
+const destaquesJaBuscados = ref(false);
+
+watch(activeTab, (novoValor) => {
+  if (novoValor === 'destaques' && !destaquesJaBuscados.value) {
+    fetchDestaques();
+  }
+});
+
+async function fetchDestaques() {
+  try {
+    isLoadingDestaques.value = true;
+    
+    const response = await $fetch<any>('/api/licitmatch/buscar-destaque-empresa', {
+        method: 'GET',
+        query: {
+          'idEmpresa' : user.idEmpresa,
+        },
+    });
+
+    const destaquesMapeados = response.map((contrato): Edital => {
+      return {
+        id: contrato.pncpIdentificador,
+        orgao: contrato.nomeUnidade,
+        status: 'Não informado',
+        modalidade: contrato.modalidade,
+        data: new Date(contrato.dataInclusao).toLocaleDateString('pt-BR'),
+        edital: '',
+        uf: contrato.ufSigla,
+        local: contrato.municipioNome,
+        objeto: contrato.descricaoContratacao,
+        isFavorito: false,
+        isDestaque: true,
+      };
+    });
+
+    editaisDestaque.value = destaquesMapeados;
+    destaquesJaBuscados.value = true;
+
+  } catch (error) {
+    console.error("Falha ao buscar destaques:", error);
+    toast.add({
+        severity: 'error',
+        summary: 'Serviço indisponível',
+        detail: 'Não foi possível buscar os destaques.',
+        life: 15000
+    });
+  } finally {
+    isLoadingDestaques.value = false;
+  }
+}
+
 
 const isDetailSidebarVisible = ref(false);
 const selectedEdital = ref<EditalDetalhado | null>(null);
 
 function toggleFavorito(id: string) {
-  const edital = allEditais.value.find((e: Edital) => e.id === id);
-  if (edital) {
-    edital.isFavorito = !edital.isFavorito;
+  const editalTodos = allEditais.value.find((e: Edital) => e.id === id);
+  if (editalTodos) {
+    editalTodos.isFavorito = !editalTodos.isFavorito;
+  }
+
+  const editalDestaque = editaisDestaque.value.find((e: Edital) => e.id === id);
+  if (editalDestaque) {
+    editalDestaque.isFavorito = !editalDestaque.isFavorito;
   }
 }
 
@@ -175,6 +240,10 @@ async function realizarInscricao(idEdital: string) {
     });
 
     fetchEditais();
+    if (destaquesJaBuscados.value) {
+      destaquesJaBuscados.value = false;
+    }
+
     isDetailSidebarVisible.value = false;
 
   }catch(error){
@@ -241,9 +310,23 @@ async function realizarInscricao(idEdital: string) {
           <EditaisList :editais="allEditais" @toggle-favorito="toggleFavorito" :num-total-por-pagina="qtdRegistros" 
             @trocar-pagina="trocarPagina" :num-total-editais="totalEditaisEncontrados" @edital-selected="showEditalDetails" @inscricao="realizarInscricao" />
         </TabPanel>
+        
         <TabPanel value="destaques">
-          <EditaisList :editais="editaisDestaque" @toggle-favorito="toggleFavorito" :num-total-por-pagina="qtdRegistros" :num-total-editais="editaisDestaque.length" @edital-selected="showEditalDetails"  />
+            <div v-if="isLoadingDestaques" class="flex items-center justify-center p-10 text-gray-500">
+              <i class="pi pi-spin pi-spinner mr-2"></i>
+              <span>Aguarde, estamos buscando seus destaques...</span>
+            </div>
+            
+            <EditaisList 
+              v-else 
+              :editais="editaisDestaque" 
+              @toggle-favorito="toggleFavorito" 
+              :num-total-por-pagina="qtdRegistros" 
+              :num-total-editais="editaisDestaque.length" 
+              @edital-selected="showEditalDetails"
+              @inscricao="realizarInscricao" />
         </TabPanel>
+
         <TabPanel value="favoritos">
           <EditaisList :editais="editaisFavoritos" @toggle-favorito="toggleFavorito" :num-total-por-pagina="qtdRegistros" :num-total-editais="editaisFavoritos.length" @edital-selected="showEditalDetails" />
         </TabPanel>

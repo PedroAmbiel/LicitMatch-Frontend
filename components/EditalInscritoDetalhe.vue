@@ -88,12 +88,17 @@
         </div>
         
         <div class="w-[100%] text-center py-5" :class="totalRequisitosCompletos == edital.requisitos.length ? `bg-green-300` : ``" 
-            v-if="edital.requisitos.length != 0">
+             v-if="edital.requisitos.length != 0">
           <small class="font-bold">Total Completo: {{ totalRequisitosCompletos }} / {{ edital.requisitos.length }}</small>
         </div>
         
         <div v-if="edital.requisitos && edital.requisitos.length > 0">
-          <DataTable :value="edital.requisitos" stripedRows size="small" class="p-datatable-sm">
+          <DataTable 
+            :value="edital.requisitos" 
+            stripedRows 
+            size="small" 
+            class="p-datatable-sm"
+            :rowClass="rowClass" >
             <Column header="Concluído?" headerStyle="width: 3rem" bodyClass="text-center">
               <template #body="slotProps">
                 <div class="flex justify-center items-center">
@@ -106,7 +111,31 @@
               </template>
             </Column>
 
-            <Column field="descricaoRequisito" header="Descrição"></Column>
+            <Column headerStyle="width: 4rem" bodyClass="text-center">
+              <template #body="slotProps">
+                <div v-if="slotProps.data.nomeCadastrou === 'SISTEMA'">
+                  
+                  <i 
+                    class="pi pi-sparkles text-blue-600" 
+                    v-tooltip.top="'Gerado por IA. Esse requisito foi possivelmente constatado no documento'"
+                  />
+                </div>
+              </template>
+            </Column>
+
+            <Column header="Descrição">
+              <template #body="slotProps">
+                <div>
+                  <span>{{ slotProps.data.descricaoRequisito }}</span>
+                  
+                  <div v-if="slotProps.data.nomeCadastrou === 'SISTEMA'">
+                    <small class="text-[.5rem] text-gray-500 italic">
+                      *Esse requisitos é apenas uma sugestões geradas a partir de uma análise superficial do documento.
+                    </small>
+                  </div>
+                </div>
+              </template>
+            </Column>
 
             <Column header="Ações" bodyClass="text-center">
               <template #body="slotProps">
@@ -253,6 +282,13 @@ const totalRequisitosCompletos = computed(() => {
 
   return requisitos.filter((req) => req.isCompleto == true).length;
 });
+
+const rowClass = (data: Requisito) => {
+  if (data.nomeCadastrou === 'SISTEMA') {
+    return '!bg-blue-100 italic';
+  }
+  return '';
+};
 
 function verDetalhes(requisito : Requisito) {
   requisitoSelecionado.value = requisito
