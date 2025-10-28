@@ -10,12 +10,15 @@ const uiStore = useUiStore()
     }
 
     if (!userStoreImport.verificarSeEstaVinculadoAEmpresa()) {
-      if (!from.path.startsWith('/public') && from.path !== to.path) {
-        setTimeout(() => {
-          uiStore.abrirDialogEmpresaRequerida()
-        }, 100)
+      if (from.path !== to.path) {
         
-        return abortNavigation()
+          
+        uiStore.abrirDialogEmpresaRequerida()
+
+        if(!from.path.startsWith("/public")){
+          return abortNavigation()
+        }
+
       }
     }
   }
