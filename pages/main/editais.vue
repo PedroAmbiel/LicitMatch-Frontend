@@ -315,7 +315,7 @@ async function realizarInscricao(idEdital: string) {
               <div class="!flex-none text-center">
                   Aqui são exibidos editais com base nas informações preenchidas no cadastro da empresa.
                   <br>
-                  Atualmente os dados mais relevantes para a pesquisa são: <strong>Palavras chave</strong> e <strong>Estados de Atuação</strong>.
+                  Atualmente os dados mais relevantes para a pesquisa são: <strong>Palavras-chave</strong> e <strong>Estados de Atuação</strong>.
               </div>
             </Message>
 

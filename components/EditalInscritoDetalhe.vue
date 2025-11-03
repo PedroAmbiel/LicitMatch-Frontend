@@ -94,7 +94,10 @@
             <div class="flex items-center justify-between mb-3">
               <div class="flex items-center gap-2">
                 <i class="pi pi-list-check text-xl text-blue-600"></i>
-                <h3 class="font-bold text-base">Requisitos para Participar</h3>
+                <div class="!flex flex-col">
+                    <h3 class="font-bold text-base">Requisitos para Participar</h3>
+                    <small class="italic text-[.7rem]">Anexe o edital em PDF para gerar requisitos automaticamente.</small>
+                </div>
               </div>
               <div class="flex items-center gap-2">
                 <FileUpload

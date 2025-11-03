@@ -12,8 +12,8 @@ interface IndicadoresDashboard {
 }
 
 const stats = ref([
-  { value: '00', title: 'Editais com Potencial', colorClass: 'text-gray-800', to: 'editais', full: true, key: 'editaisComPotencial' },
-  { value: '00', title: 'Editais Inscritos', colorClass: 'text-green-500', to: 'minhas_licitacoes', full: true, key: 'editaisInscritos' },
+  { value: '00', title: 'Editais com Potencial', colorClass: 'text-gray-800', to: 'editais', full: false, key: 'editaisComPotencial' },
+  { value: '00', title: 'Editais Inscritos', colorClass: 'text-green-500', to: 'minhas_licitacoes', full: false, key: 'editaisInscritos' },
   { value: '00', title: 'Editais em Andamento', colorClass: 'text-orange-500', to: 'minhas_licitacoes', full: false, key: 'editaisEmAndamento' },
   { value: '00', title: 'Editais Vencidos', colorClass: 'text-red-500', to: 'minhas_licitacoes', full: false, key: 'editaisVencidos' },
 ])
