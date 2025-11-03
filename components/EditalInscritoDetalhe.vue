@@ -4,176 +4,208 @@
     <Skeleton height="10rem"></Skeleton>
   </div>
   
-  <div v-else-if="edital" class="h-full flex flex-col text-gray-700 p-2 relative">
-
-    
-    <header class="p-4 border-b border-gray-200">
-      <div class="flex justify-between items-start">
-        <div class="flex items-center gap-4">
-          <i class="pi pi-file-edit text-blue-600 text-3xl"></i>
-          <div>
-            <h2 class="font-bold text-lg text-gray-800">{{ edital.nomeUnidade }}</h2>
-            <p class="text-sm text-gray-500">Edital Nº: {{ edital.pncpIdentificador }}</p>
-          </div>
-        </div>
-        <div class="flex items-center">
-          <Button icon="pi pi-times" text rounded severity="secondary" @click="$emit('close')" />
-        </div>
+  <div v-else-if="edital" class="h-full flex flex-col text-gray-700 relative">
+      <div class="flex justify-between items-center px-4 py-3 border-b border-gray-200">
+        <h2 class="font-bold text-xl text-gray-800">Detalhes do Edital</h2>
+        <Button icon="pi pi-times" text rounded severity="secondary" @click="$emit('close')" />
       </div>
 
-      <div class="mt-4 grid grid-cols-2 gap-x-4 gap-y-2 text-sm">
-        <p>Situação: <Tag :value="edital.situacaoPncp" :severity="getStatusSeverity(edital.situacaoPncp)" /></p>
-        <p>Modalidade: <span class="font-semibold">{{ edital.modalidade }}</span></p>
-        <p>Modo de disputa: <span class="font-semibold">{{ edital.modoDisputa }}</span></p>
-        <p>Local: <span class="font-semibold">{{ edital.municipioNome }} - {{ edital.ufSigla }}</span></p>
-        <p>Registro de Preço: <span class="font-semibold">{{ edital.isRegistroPreco ? 'Sim' : 'Não' }}</span></p>
-      </div>
-
-      <div class="mt-4 flex justify-between text-sm bg-gray-50 p-3 rounded-md">
-        <p>Início Propostas: <span class="font-bold">{{ edital.inicioPropostas ? new Date(edital.inicioPropostas).toLocaleDateString('pt-BR') : 'Sem Informação' }}</span></p>
-        <p>Fim Propostas: <span class="font-bold">{{ edital.fimPropostas ? new Date(edital.fimPropostas).toLocaleDateString('pt-BR') : 'Sem Informação' }}</span></p>
-      </div>
-    </header>
-
-    <div class="flex-grow p-4 overflow-y-auto">
-      <div class="mb-6">
-        <h3 class="font-bold text-lg mb-2">Objeto da Contratação</h3>
-        <p class="text-sm text-gray-600 leading-relaxed text-justify">{{ edital.descricaoContratacao }}</p>
-      </div>
-      
-      <div class="flex items-center gap-3 mb-6">
-        <i class="pi pi-book text-xl text-blue-600"></i>
-        <div>
-          <h3 class="font-bold">Acessar Edital</h3>
-          <a :href="edital.linkEdital" target="_blank" class="text-blue-500 hover:underline text-sm break-all">
-            {{ edital.linkEdital }}
-          </a>
-        </div>
-      </div>
-
-      <div class="mt-6">
-        <div class="flex items-center justify-between mb-3">
-          <div class="flex items-center gap-3">
-            <i class="pi pi-list-check text-xl text-blue-600"></i>
-            <h3 class="font-bold text-lg">Requisitos para Participar</h3>
-          </div>
-          <div class="flex items-center gap-2">
-            <FileUpload
-              ref="fileUploadRef"
-              mode="basic"
-              accept="application/pdf"
-              name="arquivos[]"
-              :auto="false"
-              :customUpload="true"
-              @select="confirmarUpload"
-              chooseLabel="Enviar Arquivo"
-              chooseIcon="pi pi-upload"
-              severity="info"
-              class="p-button-sm"
-              :multiple="false"
-            >
-              <template #empty>
-                <span class="text-sm text-gray-500">Nenhum arquivo selecionado</span>
-              </template>
-
-            </FileUpload>
-            <Button
-              label="Adicionar Requisito"
-              icon="pi pi-plus"
-              size="small"
-              severity="info"
-              @click="abrirDialog"
-            />
-          </div>
-        </div>
+      <div class="flex-grow flex gap-4 p-4 overflow-hidden">
         
-        <div class="w-[100%] text-center py-5" :class="totalRequisitosCompletos == edital.requisitos.length ? `bg-green-300` : ``" 
-             v-if="edital.requisitos.length != 0">
-          <small class="font-bold">Total Completo: {{ totalRequisitosCompletos }} / {{ edital.requisitos.length }}</small>
+        <div class="w-2/5 flex flex-col gap-4 overflow-y-auto pr-2">
+          
+          <div class="bg-white border border-gray-200 rounded-lg p-4 shadow-sm">
+            <div class="flex items-center gap-3 mb-3">
+              <i class="pi pi-file-edit text-blue-600 text-2xl"></i>
+              <div>
+                <h3 class="font-bold text-base text-gray-800">{{ edital.nomeUnidade }}</h3>
+                <p class="text-xs text-gray-500">Edital Nº: {{ edital.pncpIdentificador }}</p>
+              </div>
+            </div>
+
+            <div class="space-y-2 text-sm">
+              <div class="flex items-center justify-between">
+                <span class="text-gray-600">Situação:</span>
+                <Tag :value="edital.situacaoPncp" :severity="getStatusSeverity(edital.situacaoPncp)" />
+              </div>
+              <div class="flex justify-between">
+                <span class="text-gray-600">Modalidade:</span>
+                <span class="font-semibold">{{ edital.modalidade }}</span>
+              </div>
+              <div class="flex justify-between">
+                <span class="text-gray-600">Modo de disputa:</span>
+                <span class="font-semibold">{{ edital.modoDisputa }}</span>
+              </div>
+              <div class="flex justify-between">
+                <span class="text-gray-600">Local:</span>
+                <span class="font-semibold">{{ edital.municipioNome }} - {{ edital.ufSigla }}</span>
+              </div>
+              <div class="flex justify-between">
+                <span class="text-gray-600">Registro de Preço:</span>
+                <span class="font-semibold">{{ edital.isRegistroPreco ? 'Sim' : 'Não' }}</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="bg-blue-50 border border-blue-200 rounded-lg p-4 shadow-sm">
+            <h3 class="font-bold text-sm mb-3 text-blue-900">Prazos</h3>
+            <div class="space-y-2 text-sm">
+              <div class="flex justify-between">
+                <span class="text-gray-700">Início Propostas:</span>
+                <span class="font-bold text-gray-900">
+                  {{ edital.inicioPropostas ? new Date(edital.inicioPropostas).toLocaleDateString('pt-BR') : 'Sem Informação' }}
+                </span>
+              </div>
+              <div class="flex justify-between">
+                <span class="text-gray-700">Fim Propostas:</span>
+                <span class="font-bold text-gray-900">
+                  {{ edital.fimPropostas ? new Date(edital.fimPropostas).toLocaleDateString('pt-BR') : 'Sem Informação' }}
+                </span>
+              </div>
+            </div>
+          </div>
+
+          <div class="bg-white border border-gray-200 rounded-lg p-4 shadow-sm">
+            <h3 class="font-bold text-sm mb-2 text-gray-800">Objeto da Contratação</h3>
+            <p class="text-xs text-gray-600 leading-relaxed text-justify">{{ edital.descricaoContratacao }}</p>
+          </div>
+
+          <div class="bg-white border border-gray-200 rounded-lg p-4 shadow-sm">
+            <div class="flex items-center gap-2 mb-2">
+              <i class="pi pi-book text-lg text-blue-600"></i>
+              <h3 class="font-bold text-sm">Acessar Edital</h3>
+            </div>
+            <a :href="edital.linkEdital" target="_blank" class="text-blue-500 hover:underline text-xs break-all">
+              {{ edital.linkEdital }}
+            </a>
+          </div>
+
+          <Button 
+            label="Cancelar Inscrição" 
+            severity="danger"
+            class="w-full mt-auto" 
+            @click="$emit('desinscricao', edital.pncpIdentificador)" 
+          />
         </div>
-        
-        <div v-if="edital.requisitos && edital.requisitos.length > 0">
-          <DataTable 
-            :value="edital.requisitos" 
-            stripedRows 
-            size="small" 
-            class="p-datatable-sm"
-            :rowClass="rowClass" >
-            <Column header="Concluído?" headerStyle="width: 3rem" bodyClass="text-center">
-              <template #body="slotProps">
-                <div class="flex justify-center items-center">
-                  <Checkbox 
-                    v-model="slotProps.data.isCompleto" 
-                    :binary="true"
-                    @value-change="onRequisitoChange(slotProps.data)"
-                  />
-                </div>
-              </template>
-            </Column>
 
-            <Column headerStyle="width: 4rem" bodyClass="text-center">
-              <template #body="slotProps">
-                <div v-if="slotProps.data.nomeCadastrou === 'SISTEMA'">
-                  
-                  <i 
-                    class="pi pi-sparkles text-blue-600" 
-                    v-tooltip.top="'Gerado por IA. Esse requisito foi possivelmente constatado no documento'"
-                  />
-                </div>
-              </template>
-            </Column>
+        <div class="w-3/5 flex flex-col bg-white border border-gray-200 rounded-lg shadow-sm overflow-hidden">
+          
+          <div class="p-4 border-b border-gray-200 bg-gray-50">
+            <div class="flex items-center justify-between mb-3">
+              <div class="flex items-center gap-2">
+                <i class="pi pi-list-check text-xl text-blue-600"></i>
+                <h3 class="font-bold text-base">Requisitos para Participar</h3>
+              </div>
+              <div class="flex items-center gap-2">
+                <FileUpload
+                  ref="fileUploadRef"
+                  mode="basic"
+                  accept="application/pdf"
+                  name="arquivos[]"
+                  :auto="true"              
+                  :custom-upload="true"
+                  @select="confirmarUpload"
+                  chooseLabel="Enviar Edital (PDF)"
+                  chooseIcon="pi pi-upload"
+                  severity="info"
+                  class="p-button-sm"
+                  :multiple="false"
+                />
+                <Button
+                  label="Adicionar Requisito"
+                  icon="pi pi-plus"
+                  size="small"
+                  severity="info"
+                  @click="abrirDialog"
+                />
+              </div>
+            </div>
+            
+            <div class="text-center py-2 rounded" 
+                :class="totalRequisitosCompletos == edital.requisitos.length && edital.requisitos.length != 0 ? 'bg-green-200' : 'bg-gray-100'" 
+                v-if="edital.requisitos.length != 0">
+              <small class="font-bold">Total Completo: {{ totalRequisitosCompletos }} / {{ edital.requisitos.length }}</small>
+            </div>
+          </div>
 
-            <Column header="Descrição">
-              <template #body="slotProps">
-                <div>
-                  <span>{{ slotProps.data.descricaoRequisito }}</span>
-                  
-                  <div v-if="slotProps.data.nomeCadastrou === 'SISTEMA'">
-                    <small class="text-[.5rem] text-gray-500 italic">
-                      *Esse requisitos é apenas uma sugestões geradas a partir de uma análise superficial do documento.
-                    </small>
-                  </div>
-                </div>
-              </template>
-            </Column>
+          <div class="flex-grow overflow-y-auto p-4">
+            <div v-if="edital.requisitos && edital.requisitos.length > 0">
+              <DataTable 
+                :value="edital.requisitos" 
+                stripedRows 
+                size="small" 
+                class="p-datatable-sm"
+                :rowClass="rowClass">
+                <Column header="Concluído?" headerStyle="width: 3rem" bodyClass="text-center">
+                  <template #body="slotProps">
+                    <div class="flex justify-center items-center">
+                      <Checkbox 
+                        v-model="slotProps.data.isCompleto" 
+                        :binary="true"
+                        @value-change="onRequisitoChange(slotProps.data)"
+                      />
+                    </div>
+                  </template>
+                </Column>
 
-            <Column header="Ações" bodyClass="text-center">
-              <template #body="slotProps">
-                <div class="flex flex-col justify-center gap-2">
-                  <Button
-                    icon="pi pi-exclamation-circle"
-                    severity="info"
-                    class="hover:!scale-110 transition-transform"
-                    @click="verDetalhes(slotProps.data)"
-                  />
+                <Column headerStyle="width: 4rem" bodyClass="text-center">
+                  <template #body="slotProps">
+                    <div v-if="slotProps.data.nomeCadastrou === 'SISTEMA'">
+                      <i 
+                        class="pi pi-sparkles text-blue-600" 
+                        v-tooltip.top="'Gerado por IA. Esse requisito foi possivelmente constatado no documento'"
+                      />
+                    </div>
+                  </template>
+                </Column>
 
-                  <Button
-                    icon="pi pi-trash"
-                    class="bg-red-500 border-none hover:!bg-red-600 hover:!scale-105 transition-all"
-                    @click="confirmarRemocao(slotProps.data)"
-                  />
-                </div>
-              </template>
-            </Column>
-          </DataTable>
-        </div>
-        <div v-else class="bg-gray-50 border border-gray-200 rounded-lg p-4">
-          <p class="text-sm text-center text-gray-600">
-            <i class="pi pi-info-circle mr-2"></i>
-            Nenhum requisito específico foi cadastrado para este edital.
-          </p>
+                <Column header="Descrição">
+                  <template #body="slotProps">
+                    <div>
+                      <span>{{ slotProps.data.descricaoRequisito }}</span>
+                      
+                      <div v-if="slotProps.data.nomeCadastrou === 'SISTEMA'">
+                        <small class="text-[.5rem] text-gray-500 italic">
+                          *Esse requisitos é apenas uma sugestões geradas a partir de uma análise superficial do documento.
+                        </small>
+                      </div>
+                    </div>
+                  </template>
+                </Column>
+
+                <Column header="Ações" bodyClass="text-center" headerStyle="width: 5rem">
+                  <template #body="slotProps">
+                    <div class="flex justify-center gap-2">
+                      <Button
+                        icon="pi pi-exclamation-circle"
+                        severity="info"
+                        size="small"
+                        title="Informações"
+                        text
+                        @click="verDetalhes(slotProps.data)"
+                      />
+                      <Button
+                        icon="pi pi-trash"
+                        severity="danger"
+                        size="small"
+                        text
+                        title="Excluir"
+                        @click="confirmarRemocao(slotProps.data)"
+                      />
+                    </div>
+                  </template>
+                </Column>
+              </DataTable>
+            </div>
+            <div v-else class="bg-gray-50 border border-gray-200 rounded-lg p-6 text-center">
+              <i class="pi pi-info-circle text-gray-400 text-3xl mb-2"></i>
+              <p class="text-sm text-gray-600">
+                Nenhum requisito específico foi cadastrado para este edital.
+              </p>
+            </div>
+          </div>
         </div>
       </div>
-    </div>
-
-    <footer class="p-4 mt-auto border-t border-gray-200">
-      <Button 
-        label="Cancelar Inscrição" 
-        severity="danger"
-        class="w-full" 
-        @click="$emit('desinscricao', edital.pncpIdentificador)" 
-      />
-    </footer>
   </div>
 
   <Dialog v-model:visible="dialogVisivel" modal header="Adicionar Novo Requisito" :style="{ width: '40rem' }" :draggable="false">

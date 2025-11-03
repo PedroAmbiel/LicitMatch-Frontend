@@ -71,7 +71,6 @@ function getStatusSeverity(status: string) {
             <div class="flex-grow" @click="emit('edital-selected', slotProps.data, slotProps.data.isFavorito)">
               <div class="grid grid-cols-1 md:grid-cols-4 gap-x-6 gap-y-2 text-sm mb-3">
                 <div><strong>Órgão:</strong> <span class="text-blue-600 font-semibold">{{ slotProps.data.orgao }}</span></div>
-                <div><strong>Status:</strong> <Tag :value="slotProps.data.status" :severity="getStatusSeverity(slotProps.data.status)" /></div>
                 <div><strong>Modalidade:</strong> <span class="text-blue-600 font-semibold">{{ slotProps.data.modalidade }}</span></div>
                 <div><strong>Data:</strong> <span class="text-blue-600 font-semibold">{{ slotProps.data.data }}</span></div>
                 <div><strong>Edital:</strong> {{ slotProps.data.id }}</div>

@@ -1,8 +1,7 @@
 <script setup lang="ts">
-import { ref, computed, onMounted, watch } from 'vue'; // NOVO: 'watch' foi adicionado (embora já estivesse no seu import)
-import { useLoadingStore } from '@/stores/loadingStore';
-import type { PageState } from 'primevue';
-
+const tooltipDestaques = `Aqui são exibidos editais com base nas informações preenchidas no cadastro da empresa.<br><br>
+                          Atualmente os dados mais relevantes para a pesquisa são: 
+                          <strong>Palavras chave</strong> e <strong>Estados de Atuação</strong>.`;
 definePageMeta({
   layout: 'logged',
   middleware: 'empresa-check',
@@ -12,7 +11,6 @@ definePageMeta({
 interface Edital {
   id: string;
   orgao: string;
-  status: string;
   modalidade: string;
   data: string;
   edital: string;
@@ -27,7 +25,6 @@ interface EditalDetalhado {
   id : string
   pncpIdentificador: string;
   nomeUnidade: string;
-  status: string;
   modalidade: string;
   dataInclusao: string;
   edital: string;
@@ -70,7 +67,6 @@ async function fetchEditais() {
       return {
         id: contrato.pncpIdentificador,
         orgao: contrato.nomeUnidade,
-        status: 'Não informado',
         modalidade: contrato.modalidade,
         data: new Date(contrato.dataInclusao).toLocaleDateString('pt-BR'),
         edital: '',
@@ -138,7 +134,6 @@ async function fetchDestaques() {
       return {
         id: contrato.pncpIdentificador,
         orgao: contrato.nomeUnidade,
-        status: 'Não informado',
         modalidade: contrato.modalidade,
         data: new Date(contrato.dataInclusao).toLocaleDateString('pt-BR'),
         edital: '',
@@ -291,8 +286,8 @@ async function realizarInscricao(idEdital: string) {
             <span>Todos</span>
           </Tab>
           <Tab value="destaques">
-            <i class="pi pi-bolt mr-2"></i>
-            <span>Em destaque</span>
+            <i class="pi pi-sparkles mr-2"></i>
+            <span>Recomendações</span>
           </Tab>
           <Tab value="favoritos">
             <i class="pi pi-star mr-2"></i>
@@ -312,6 +307,18 @@ async function realizarInscricao(idEdital: string) {
         </TabPanel>
         
         <TabPanel value="destaques">
+
+            <Message 
+              severity="info" 
+              :closable="false" 
+              class="mb-4 text-sm ">
+              <div class="!flex-none text-center">
+                  Aqui são exibidos editais com base nas informações preenchidas no cadastro da empresa.
+                  <br>
+                  Atualmente os dados mais relevantes para a pesquisa são: <strong>Palavras chave</strong> e <strong>Estados de Atuação</strong>.
+              </div>
+            </Message>
+
             <div v-if="isLoadingDestaques" class="flex items-center justify-center p-10 text-gray-500">
               <i class="pi pi-spin pi-spinner mr-2"></i>
               <span>Aguarde, estamos buscando seus destaques...</span>
@@ -345,4 +352,7 @@ async function realizarInscricao(idEdital: string) {
   .p-datatable-wrapper { border: 1px solid #e5e7eb; border-radius: 6px; }
   .p-datatable .p-datatable-tbody > tr > td { padding: 0; }
   .p-tablist-active-bar{ background: #075ae0 !important; height: .2rem;}
+  .p-message-content {
+    display: inline !important;
+  }
 </style>

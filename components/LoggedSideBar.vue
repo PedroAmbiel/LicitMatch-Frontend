@@ -20,12 +20,13 @@ const menuItems = [
   { icon: 'pi pi-th-large', label: 'Dashboard', to: '/main/dashboard' },
   { icon: 'pi pi-file', label: 'Todos os Editais', to: '/main/editais'},
   { icon: 'pi pi-briefcase', label: 'Minhas Licitações', to: '/main/minhas_licitacoes'},
-  { icon: 'pi pi-calendar', label: 'Calendário', to: '/' },
+  // { icon: 'pi pi-calendar', label: 'Calendário', to: '/' },
 ];
 
 const footerMenuItems = [
-    { icon: 'pi pi-user', label: 'Meu Perfil', to: '/' },
-    { icon: 'pi pi-sign-out', label: 'Sair', to: '/' },
+    { icon: 'pi pi-building', label: user.nomeEmpresa != null ? user.nomeEmpresa : 'SEM EMPRESA', to: '/main/perfil_empresa' },
+    { icon: 'pi pi-user', label: 'Meu Perfil', to: '/main/perfil_usuario' },
+    { icon: 'pi pi-sign-out', label: 'Sair', to: '/public' },
 ];
 
 </script>
@@ -67,16 +68,6 @@ const footerMenuItems = [
     </nav>
 
     <div class="p-4 mt-auto border-t border-blue-800">
-
-      <div class="p-3 mb-2 flex items-center gap-3 text-gray-200" :class="[isMinimized ? 'justify-center' : '']" v-tooltip="isMinimized ? user.nomeEmpresa : ``">
-        <i class="pi pi-building text-xl flex-shrink-0"></i>
-        <Transition name="fade">
-            <div v-if="!isMinimized" class="flex flex-col leading-tight">
-                <span class="text-xs font-light">Empresa</span>
-                <span class="whitespace-nowrap font-semibold">{{ user.nomeEmpresa }}</span>
-            </div>
-        </Transition>
-      </div>
       <ul class="space-y-2">
         <li v-for="item in footerMenuItems" :key="item.label" @click="item.label == 'Sair' ? logoff() : null">
           <NuxtLink
@@ -87,9 +78,9 @@ const footerMenuItems = [
             active-class="bg-blue-800"
           >
             <i :class="[item.icon, 'text-xl flex-shrink-0']"></i>
-              <Transition name="fade">
-                <span v-if="!isMinimized" class="whitespace-nowrap">{{ item.label }}</span>
-              </Transition>
+            <Transition name="fade">
+              <span v-if="!isMinimized" class="text-wrap break-all">{{ item.label }}</span>
+            </Transition>
           </NuxtLink>
         </li>
       </ul>

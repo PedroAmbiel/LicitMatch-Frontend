@@ -170,7 +170,7 @@ async function buscarEditalDetalhado(idEdital: string): Promise<EditalDetalhado>
   <Sidebar
     v-model:visible="isDetailSidebarVisible"
     position="right"
-    class="!w-2/4"
+    class="!w-full"
     :pt="{
       mask: { class: 'bg-black/10 backdrop-blur-sm' },
       header: { class: 'hidden' },

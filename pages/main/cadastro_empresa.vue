@@ -522,13 +522,6 @@ const estados = ref([
 
 const cnaesDisponiveis = ref()
 
-// const cnaesDisponiveis = ref([
-//   { codigo: '62.01-5', descricao: 'Desenvolvimento de programas de computador sob encomenda' },
-//   { codigo: '62.02-3', descricao: 'Desenvolvimento e licenciamento de programas de computador customizáveis' },
-//   { codigo: '62.03-1', descricao: 'Desenvolvimento e licenciamento de programas de computador não-customizáveis' },
-//   { codigo: '62.04-0', descricao: 'Consultoria em tecnologia da informação' },
-//   { codigo: '63.11-9', descricao: 'Tratamento de dados, hospedagem na internet e outras atividades relacionadas' }
-// ])
 
 const cnaesFiltrados = ref([])
 
