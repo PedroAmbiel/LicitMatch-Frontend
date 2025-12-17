@@ -349,7 +349,7 @@ const confirmarRemocao = (requisito : Requisito) => {
 const onRequisitoChange = async (requisito: Requisito) => {
   try {
 
-    const response = await $fetch<any>('/api/licitmatch/alterar-estado-completo-requisito', {
+    await $fetch<any>('/api/licitmatch/alterar-estado-completo-requisito', {
       method: 'PUT',
       body: {
         'idEmpresaContratoRequisito' : requisito.idRequisito,
@@ -357,12 +357,9 @@ const onRequisitoChange = async (requisito: Requisito) => {
       },
     });
 
-    console.log(response);
-
   } catch (error) {
     requisito.isCompleto = !requisito.isCompleto;
 
-    console.error("Erro ao buscar editais:", error);
     toast.add({
         severity: 'error',
         summary: 'Serviço indisponível',
@@ -370,14 +367,12 @@ const onRequisitoChange = async (requisito: Requisito) => {
         life: 15000
     });
   }
-  
-  console.log('Requisito atualizado:', requisito);
 };
 
 const removerRequisito = async (idRequisito : number) =>{
    try {
 
-    const response = await $fetch<any>('/api/licitmatch/remover-requisito', {
+    await $fetch<any>('/api/licitmatch/remover-requisito', {
       method: 'DELETE',
       query: {
         'idRequisito' : idRequisito,
@@ -388,7 +383,6 @@ const removerRequisito = async (idRequisito : number) =>{
 
   } catch (error) {
 
-    console.error("Erro ao remover requisito:", error);
     toast.add({
         severity: 'error',
         summary: 'Serviço indisponível',
@@ -477,7 +471,6 @@ const salvarRequisito = async () => {
 const handleFileUpload = async (event : any) => {
   const file = event.files[0];
 
-  console.log("Arquivo selecionado para upload:", file);
   const formData = new FormData();
   formData.append('file', file);
   formData.append('idEmpresaContrato', props.edital!.idEmpresaContrato.toString());

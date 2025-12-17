@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { formatDateBR } from '~/utils/formatters';
 
 definePageMeta({
   layout: 'logged',
@@ -58,37 +59,45 @@ const user = userStore();
 const isDetailSidebarVisible = ref(false);
 const selectedEdital = ref<EditalDetalhado | null>(null);
 
+const cache = useCache();
+
+// Optimized edital formatting
+const formatEdital = (contrato: any): Edital => {
+  return {
+    id: contrato.pncpIdentificador,
+    orgao: contrato.nomeUnidade,
+    status: contrato.situacao,
+    modalidade: contrato.modalidade,
+    data: formatDateBR(contrato.dataInscricao),
+    edital: '',
+    uf: contrato.ufSigla,
+    local: contrato.municipioNome,
+    objeto: contrato.descricaoContratacao,
+  };
+};
+
 async function fetchEditais() {
   try {
     loadingStore.show();
 
-    const response = await $fetch<any>('/api/licitmatch/listar-contratos-inscritos', {
-        query: {
-          'idEmpresa' : user.idEmpresa,
-          'situacao' : 'PRE_SELECAO'
-        },
-    });
+    const cacheKey = `contratos-inscritos-${user.idEmpresa}`;
+    
+    const response = await cache.get(
+      cacheKey,
+      async () => {
+        return await $fetch<any>('/api/licitmatch/listar-contratos-inscritos', {
+          query: {
+            'idEmpresa' : user.idEmpresa,
+            'situacao' : 'PRE_SELECAO'
+          },
+        });
+      },
+      3 * 60 * 1000 // Cache for 3 minutes
+    );
 
-    console.log(response);
-
-    const editaisMapeados = response.data.map((contrato): Edital => {
-      return {
-        id: contrato.pncpIdentificador,
-        orgao: contrato.nomeUnidade,
-        status: contrato.situacao,
-        modalidade: contrato.modalidade,
-        data: new Date(contrato.dataInscricao).toLocaleDateString('pt-BR'),
-        edital: '',
-        uf: contrato.ufSigla,
-        local: contrato.municipioNome,
-        objeto: contrato.descricaoContratacao,
-      };
-    });
-
-    editais.value = editaisMapeados;
+    editais.value = response.data.map(formatEdital);
 
   } catch (error) {
-    console.error("Erro ao buscar editais:", error);
     toast.add({
         severity: 'error',
         summary: 'Serviço indisponível',
@@ -105,15 +114,30 @@ onMounted(() => {
   fetchEditais();
 });
 
-
+// Optimized sorting - cache parsed dates to avoid repeated parsing
 const editaisFiltrados = computed(() => {
-  let result = [...editais.value];
+  const result = [...editais.value];
   
   if (ordenacao.value === 'data') {
+    // Create a Map to cache parsed dates
+    const dateCache = new Map<string, number>();
+    
     result.sort((a, b) => {
-        const dateA = a.data.split('/').reverse().join('-');
-        const dateB = b.data.split('/').reverse().join('-');
-        return new Date(dateB).getTime() - new Date(dateA).getTime();
+      let dateA = dateCache.get(a.data);
+      if (!dateA) {
+        const [day, month, year] = a.data.split('/');
+        dateA = new Date(`${year}-${month}-${day}`).getTime();
+        dateCache.set(a.data, dateA);
+      }
+      
+      let dateB = dateCache.get(b.data);
+      if (!dateB) {
+        const [day, month, year] = b.data.split('/');
+        dateB = new Date(`${year}-${month}-${day}`).getTime();
+        dateCache.set(b.data, dateB);
+      }
+      
+      return dateB - dateA;
     });
   } else if (ordenacao.value === 'orgao') {
     result.sort((a, b) => a.orgao.localeCompare(b.orgao));
@@ -139,10 +163,8 @@ async function mostrarDetalhes(id: string) {
     const editalDetalhado = await buscarEditalDetalhado(id);
 
     selectedEdital.value = editalDetalhado;
-    console.log("Requisitos" , selectedEdital.value.requisitos)
     
   } catch (error) {
-    console.error("Falha ao buscar detalhes do edital:", error);
     isDetailSidebarVisible.value = false; 
   } finally {
     loadingStore.isLoading = false;

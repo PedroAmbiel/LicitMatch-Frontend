@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { formatDateBR } from '~/utils/formatters';
+
 const tooltipDestaques = `Aqui são exibidos editais com base nas informações preenchidas no cadastro da empresa.<br><br>
                           Atualmente os dados mais relevantes para a pesquisa são: 
                           <strong>Palavras chave</strong> e <strong>Estados de Atuação</strong>.`;
@@ -51,32 +53,46 @@ const qtdRegistros = ref(10);
 const allEditais = ref<Edital[]>([]);
 const totalEditaisEncontrados = ref(0)
 
+const cache = useCache();
+
+// Cache for formatted data to avoid repeated processing
+const formatEdital = (contrato: any, isFavorito = false, isDestaque = false): Edital => {
+  return {
+    id: contrato.pncpIdentificador,
+    orgao: contrato.nomeUnidade,
+    modalidade: contrato.modalidade,
+    data: formatDateBR(contrato.dataInclusao),
+    edital: '',
+    uf: contrato.ufSigla,
+    local: contrato.municipioNome,
+    objeto: contrato.descricaoContratacao,
+    isFavorito,
+    isDestaque,
+  };
+};
+
 async function fetchEditais() {
   try {
     loadingStore.show();
 
-    const response = await $fetch<any>('/api/licitmatch/listar-contratos-minimo', {
-       query: {
-        'paginacao': pagina.value,
-        'qtdRegistros': qtdRegistros.value,
-        'idEmpresa' : user.idEmpresa,
-      },
-    });
+    const cacheKey = `editais-${user.idEmpresa}-${pagina.value}-${qtdRegistros.value}`;
     
-    const editaisMapeados = response.data.map((contrato): Edital => {
-      return {
-        id: contrato.pncpIdentificador,
-        orgao: contrato.nomeUnidade,
-        modalidade: contrato.modalidade,
-        data: new Date(contrato.dataInclusao).toLocaleDateString('pt-BR'),
-        edital: '',
-        uf: contrato.ufSigla,
-        local: contrato.municipioNome,
-        objeto: contrato.descricaoContratacao,
-        isFavorito: false,
-        isDestaque: false,
-      };
-    });
+    const response = await cache.get(
+      cacheKey,
+      async () => {
+        return await $fetch<any>('/api/licitmatch/listar-contratos-minimo', {
+          query: {
+            'paginacao': pagina.value,
+            'qtdRegistros': qtdRegistros.value,
+            'idEmpresa' : user.idEmpresa,
+          },
+        });
+      },
+      2 * 60 * 1000 // Cache for 2 minutes
+    );
+    
+    // Optimized mapping without creating Date objects multiple times
+    const editaisMapeados = response.data.map((contrato: any) => formatEdital(contrato));
 
     totalEditaisEncontrados.value = response.totalRegistros;
     allEditais.value = editaisMapeados;
@@ -101,12 +117,26 @@ onMounted(() => {
 const activeTab = ref('todos');
 
 const editaisDestaque = ref<Edital[]>([]);
+
+// Optimized favorites computation - use Map for better performance
 const editaisFavoritos = computed(() => {
-  const favoritosTodos = allEditais.value.filter((e: Edital) => e.isFavorito);
-  const favoritosDestaque = editaisDestaque.value.filter((e: Edital) => e.isFavorito);
-  const todosIds = new Set(favoritosTodos.map(f => f.id));
-  const favoritosUnicos = [...favoritosTodos, ...favoritosDestaque.filter(f => !todosIds.has(f.id))];
-  return favoritosUnicos;
+  const favoritosMap = new Map<string, Edital>();
+  
+  // Add favorites from allEditais
+  allEditais.value.forEach((e: Edital) => {
+    if (e.isFavorito) {
+      favoritosMap.set(e.id, e);
+    }
+  });
+  
+  // Add favorites from destaques if not already present
+  editaisDestaque.value.forEach((e: Edital) => {
+    if (e.isFavorito && !favoritosMap.has(e.id)) {
+      favoritosMap.set(e.id, e);
+    }
+  });
+  
+  return Array.from(favoritosMap.values());
 });
 
 
@@ -123,33 +153,26 @@ async function fetchDestaques() {
   try {
     isLoadingDestaques.value = true;
     
-    const response = await $fetch<any>('/api/licitmatch/buscar-destaque-empresa', {
-        method: 'GET',
-        query: {
-          'idEmpresa' : user.idEmpresa,
-        },
-    });
+    const cacheKey = `destaques-${user.idEmpresa}`;
+    
+    const response = await cache.get(
+      cacheKey,
+      async () => {
+        return await $fetch<any>('/api/licitmatch/buscar-destaque-empresa', {
+          method: 'GET',
+          query: {
+            'idEmpresa' : user.idEmpresa,
+          },
+        });
+      },
+      5 * 60 * 1000 // Cache for 5 minutes
+    );
 
-    const destaquesMapeados = response.map((contrato): Edital => {
-      return {
-        id: contrato.pncpIdentificador,
-        orgao: contrato.nomeUnidade,
-        modalidade: contrato.modalidade,
-        data: new Date(contrato.dataInclusao).toLocaleDateString('pt-BR'),
-        edital: '',
-        uf: contrato.ufSigla,
-        local: contrato.municipioNome,
-        objeto: contrato.descricaoContratacao,
-        isFavorito: false,
-        isDestaque: true,
-      };
-    });
-
-    editaisDestaque.value = destaquesMapeados;
+    // Optimized mapping using helper function
+    editaisDestaque.value = response.map((contrato: any) => formatEdital(contrato, false, true));
     destaquesJaBuscados.value = true;
 
   } catch (error) {
-    console.error("Falha ao buscar destaques:", error);
     toast.add({
         severity: 'error',
         summary: 'Serviço indisponível',
@@ -191,7 +214,6 @@ async function showEditalDetails(edital: Edital, isFavorito : boolean) {
     selectedEdital.value = editalDetalhado;
 
   } catch (error) {
-    console.error("Falha ao buscar detalhes do edital:", error);
     isDetailSidebarVisible.value = false; 
   } finally {
     loadingStore.isLoading = false;
@@ -218,7 +240,7 @@ function trocarPagina(event: PageState): void {
 async function realizarInscricao(idEdital: string) {
   try{
 
-    const response = await $fetch('/api/licitmatch/inscrever-empresa', {
+    await $fetch('/api/licitmatch/inscrever-empresa', {
       method: 'POST',
       body: {
         "idEmpresa": user.idEmpresa,
@@ -234,6 +256,10 @@ async function realizarInscricao(idEdital: string) {
       life: 8000
     });
 
+    // Invalidate cache to force refresh
+    cache.invalidatePattern(/^editais-/);
+    cache.invalidatePattern(/^destaques-/);
+
     fetchEditais();
     if (destaquesJaBuscados.value) {
       destaquesJaBuscados.value = false;
@@ -242,7 +268,6 @@ async function realizarInscricao(idEdital: string) {
     isDetailSidebarVisible.value = false;
 
   }catch(error){
-    console.log(error);
     toast.add({
       severity: 'error',
       summary: 'Erro na inscrição',
