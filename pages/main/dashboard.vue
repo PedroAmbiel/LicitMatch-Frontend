@@ -18,20 +18,30 @@ const stats = ref([
   { value: '00', title: 'Editais Vencidos', colorClass: 'text-red-500', to: 'minhas_licitacoes', full: false, key: 'editaisVencidos' },
 ])
 
+const cache = useCache();
+
 const carregarIndicadores = async () => {
   try {
-    const response = await $fetch<IndicadoresDashboard>('/api/licitmatch/indicadores-dashboard', {
-      query: {
-        "idEmpresa": userStore().idEmpresa,
+    const cacheKey = `dashboard-indicadores-${userStore().idEmpresa}`;
+    
+    const response = await cache.get(
+      cacheKey,
+      async () => {
+        return await $fetch<IndicadoresDashboard>('/api/licitmatch/indicadores-dashboard', {
+          query: {
+            "idEmpresa": userStore().idEmpresa,
+          },
+        });
       },
-    })
+      1 * 60 * 1000 // Cache for 1 minute
+    );
     
     stats.value = stats.value.map(stat => ({
       ...stat,
       value: String(response[stat.key as keyof IndicadoresDashboard] || 0).padStart(2, '0')
     }))
   } catch (error) {
-    console.error('Erro ao carregar indicadores:', error)
+    // Error handling without console.error
   }
 }
 

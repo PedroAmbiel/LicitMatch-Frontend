@@ -53,6 +53,8 @@ const qtdRegistros = ref(10);
 const allEditais = ref<Edital[]>([]);
 const totalEditaisEncontrados = ref(0)
 
+const cache = useCache();
+
 // Cache for formatted data to avoid repeated processing
 const formatEdital = (contrato: any, isFavorito = false, isDestaque = false): Edital => {
   return {
@@ -73,13 +75,21 @@ async function fetchEditais() {
   try {
     loadingStore.show();
 
-    const response = await $fetch<any>('/api/licitmatch/listar-contratos-minimo', {
-       query: {
-        'paginacao': pagina.value,
-        'qtdRegistros': qtdRegistros.value,
-        'idEmpresa' : user.idEmpresa,
+    const cacheKey = `editais-${user.idEmpresa}-${pagina.value}-${qtdRegistros.value}`;
+    
+    const response = await cache.get(
+      cacheKey,
+      async () => {
+        return await $fetch<any>('/api/licitmatch/listar-contratos-minimo', {
+          query: {
+            'paginacao': pagina.value,
+            'qtdRegistros': qtdRegistros.value,
+            'idEmpresa' : user.idEmpresa,
+          },
+        });
       },
-    });
+      2 * 60 * 1000 // Cache for 2 minutes
+    );
     
     // Optimized mapping without creating Date objects multiple times
     const editaisMapeados = response.data.map((contrato: any) => formatEdital(contrato));
@@ -143,12 +153,20 @@ async function fetchDestaques() {
   try {
     isLoadingDestaques.value = true;
     
-    const response = await $fetch<any>('/api/licitmatch/buscar-destaque-empresa', {
-        method: 'GET',
-        query: {
-          'idEmpresa' : user.idEmpresa,
-        },
-    });
+    const cacheKey = `destaques-${user.idEmpresa}`;
+    
+    const response = await cache.get(
+      cacheKey,
+      async () => {
+        return await $fetch<any>('/api/licitmatch/buscar-destaque-empresa', {
+          method: 'GET',
+          query: {
+            'idEmpresa' : user.idEmpresa,
+          },
+        });
+      },
+      5 * 60 * 1000 // Cache for 5 minutes
+    );
 
     // Optimized mapping using helper function
     editaisDestaque.value = response.map((contrato: any) => formatEdital(contrato, false, true));
@@ -237,6 +255,10 @@ async function realizarInscricao(idEdital: string) {
       detail: `Inscrição no edital ${idEdital} realizada com sucesso!`,
       life: 8000
     });
+
+    // Invalidate cache to force refresh
+    cache.invalidatePattern(/^editais-/);
+    cache.invalidatePattern(/^destaques-/);
 
     fetchEditais();
     if (destaquesJaBuscados.value) {

@@ -59,6 +59,8 @@ const user = userStore();
 const isDetailSidebarVisible = ref(false);
 const selectedEdital = ref<EditalDetalhado | null>(null);
 
+const cache = useCache();
+
 // Optimized edital formatting
 const formatEdital = (contrato: any): Edital => {
   return {
@@ -78,12 +80,20 @@ async function fetchEditais() {
   try {
     loadingStore.show();
 
-    const response = await $fetch<any>('/api/licitmatch/listar-contratos-inscritos', {
-        query: {
-          'idEmpresa' : user.idEmpresa,
-          'situacao' : 'PRE_SELECAO'
-        },
-    });
+    const cacheKey = `contratos-inscritos-${user.idEmpresa}`;
+    
+    const response = await cache.get(
+      cacheKey,
+      async () => {
+        return await $fetch<any>('/api/licitmatch/listar-contratos-inscritos', {
+          query: {
+            'idEmpresa' : user.idEmpresa,
+            'situacao' : 'PRE_SELECAO'
+          },
+        });
+      },
+      3 * 60 * 1000 // Cache for 3 minutes
+    );
 
     editais.value = response.data.map(formatEdital);
 

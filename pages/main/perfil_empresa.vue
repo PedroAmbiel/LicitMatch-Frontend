@@ -321,6 +321,7 @@ const perfil = ref(null);
 const loading = ref(true);
 const error = ref(null);
 
+const cache = useCache();
 const cnaesDisponiveis = ref([]);
 
 // --- [INÍCIO] Refs para edição de palavras-chave ---
@@ -337,18 +338,23 @@ const salvandoEstados = ref(false);
 
 async function buscarCnaes() {
   try {
-  const data = await $fetch(`/api/licitmatch/listar-cnaes`, {
-   method: 'GET',
-  });
-  cnaesDisponiveis.value = data;
+    const data = await cache.get(
+      'cnaes-list',
+      async () => {
+        return await $fetch(`/api/licitmatch/listar-cnaes`, {
+          method: 'GET',
+        });
+      },
+      60 * 60 * 1000 // Cache for 1 hour (CNAEs rarely change)
+    );
+    cnaesDisponiveis.value = data;
   } catch (err) {
-  console.error('Erro ao buscar CNAEs:', err);
-  toast.add({
-   severity: 'warn',
-   summary: 'Aviso',
-   detail: 'Não foi possível carregar as descrições dos CNAEs.',
-   life: 3000
-  });
+    toast.add({
+      severity: 'warn',
+      summary: 'Aviso',
+      detail: 'Não foi possível carregar as descrições dos CNAEs.',
+      life: 3000
+    });
   }
 }
 
@@ -366,7 +372,7 @@ definePageMeta({
 
 async function carregarPerfil() {
   try {
-  loading.value = true;
+    loading.value = true;
   	error.value = null;
   	
   	const idEmpresa = user.idEmpresa;
@@ -374,11 +380,20 @@ async function carregarPerfil() {
   	 throw new Error('ID da empresa não encontrado');
   	}
   	
-  	const data = await $fetch('/api/licitmatch/perfil-empresa', {
-  	 params: {
-  	 	idEmpresa: idEmpresa
-  	 }
-  	});
+    const cacheKey = `perfil-empresa-${idEmpresa}`;
+    
+  	const data = await cache.get(
+      cacheKey,
+      async () => {
+        return await $fetch('/api/licitmatch/perfil-empresa', {
+          params: {
+            idEmpresa: idEmpresa
+          }
+        });
+      },
+      5 * 60 * 1000 // Cache for 5 minutes
+    );
+    
   	perfil.value = data;
 
   	// Popula as palavras-chave editáveis com os dados carregados
@@ -399,7 +414,6 @@ async function carregarPerfil() {
 
   } catch (err) {
   	error.value = err.data?.message || err.message || 'Erro ao carregar perfil da empresa';
-  	console.error('Erro ao carregar perfil:', err);
   } finally {
   	loading.value = false;
   }
@@ -453,6 +467,9 @@ async function salvarPalavrasChave() {
   	palavrasChaveEditaveis.value = palavrasFiltradas;
   	toast.add({ severity: 'success', summary: 'Sucesso!', detail: 'Palavras-chave atualizadas.', life: 3000 });
   	estaEditandoPalavrasChave.value = false; 
+    
+    // Invalidate cache after update
+    cache.invalidate(`perfil-empresa-${user.idEmpresa}`);
 
   } catch (err) {
   	toast.add({
@@ -529,6 +546,9 @@ async function salvarEstadosAtuacao() {
   	});
 
   	estaEditandoEstados.value = false; // Volta para o modo de leitura
+    
+    // Invalidate cache after update
+    cache.invalidate(`perfil-empresa-${user.idEmpresa}`);
 
   } catch (err) {
   	toast.add({
