@@ -32,7 +32,7 @@ export function useDebouncedSearch<T>(
       const results = await searchFn(query)
       searchResults.value = results
     } catch (error) {
-      console.error('Search error:', error)
+      // Silently fail - error handling should be done by the calling component
       searchResults.value = null
     } finally {
       isSearching.value = false
@@ -70,7 +70,7 @@ export function useDebouncedFilter<TInput, TOutput>(
       const result = filterFn(input)
       filteredData.value = result
     } catch (error) {
-      console.error('Filter error:', error)
+      // Silently fail - error handling should be done by the calling component
     } finally {
       isFiltering.value = false
     }
