@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { formatDateBR } from '~/utils/formatters';
+
 const tooltipDestaques = `Aqui são exibidos editais com base nas informações preenchidas no cadastro da empresa.<br><br>
                           Atualmente os dados mais relevantes para a pesquisa são: 
                           <strong>Palavras chave</strong> e <strong>Estados de Atuação</strong>.`;
@@ -51,6 +53,22 @@ const qtdRegistros = ref(10);
 const allEditais = ref<Edital[]>([]);
 const totalEditaisEncontrados = ref(0)
 
+// Cache for formatted data to avoid repeated processing
+const formatEdital = (contrato: any, isFavorito = false, isDestaque = false): Edital => {
+  return {
+    id: contrato.pncpIdentificador,
+    orgao: contrato.nomeUnidade,
+    modalidade: contrato.modalidade,
+    data: formatDateBR(contrato.dataInclusao),
+    edital: '',
+    uf: contrato.ufSigla,
+    local: contrato.municipioNome,
+    objeto: contrato.descricaoContratacao,
+    isFavorito,
+    isDestaque,
+  };
+};
+
 async function fetchEditais() {
   try {
     loadingStore.show();
@@ -63,20 +81,8 @@ async function fetchEditais() {
       },
     });
     
-    const editaisMapeados = response.data.map((contrato): Edital => {
-      return {
-        id: contrato.pncpIdentificador,
-        orgao: contrato.nomeUnidade,
-        modalidade: contrato.modalidade,
-        data: new Date(contrato.dataInclusao).toLocaleDateString('pt-BR'),
-        edital: '',
-        uf: contrato.ufSigla,
-        local: contrato.municipioNome,
-        objeto: contrato.descricaoContratacao,
-        isFavorito: false,
-        isDestaque: false,
-      };
-    });
+    // Optimized mapping without creating Date objects multiple times
+    const editaisMapeados = response.data.map((contrato: any) => formatEdital(contrato));
 
     totalEditaisEncontrados.value = response.totalRegistros;
     allEditais.value = editaisMapeados;
@@ -101,12 +107,26 @@ onMounted(() => {
 const activeTab = ref('todos');
 
 const editaisDestaque = ref<Edital[]>([]);
+
+// Optimized favorites computation - use Map for better performance
 const editaisFavoritos = computed(() => {
-  const favoritosTodos = allEditais.value.filter((e: Edital) => e.isFavorito);
-  const favoritosDestaque = editaisDestaque.value.filter((e: Edital) => e.isFavorito);
-  const todosIds = new Set(favoritosTodos.map(f => f.id));
-  const favoritosUnicos = [...favoritosTodos, ...favoritosDestaque.filter(f => !todosIds.has(f.id))];
-  return favoritosUnicos;
+  const favoritosMap = new Map<string, Edital>();
+  
+  // Add favorites from allEditais
+  allEditais.value.forEach((e: Edital) => {
+    if (e.isFavorito) {
+      favoritosMap.set(e.id, e);
+    }
+  });
+  
+  // Add favorites from destaques if not already present
+  editaisDestaque.value.forEach((e: Edital) => {
+    if (e.isFavorito && !favoritosMap.has(e.id)) {
+      favoritosMap.set(e.id, e);
+    }
+  });
+  
+  return Array.from(favoritosMap.values());
 });
 
 
@@ -130,26 +150,11 @@ async function fetchDestaques() {
         },
     });
 
-    const destaquesMapeados = response.map((contrato): Edital => {
-      return {
-        id: contrato.pncpIdentificador,
-        orgao: contrato.nomeUnidade,
-        modalidade: contrato.modalidade,
-        data: new Date(contrato.dataInclusao).toLocaleDateString('pt-BR'),
-        edital: '',
-        uf: contrato.ufSigla,
-        local: contrato.municipioNome,
-        objeto: contrato.descricaoContratacao,
-        isFavorito: false,
-        isDestaque: true,
-      };
-    });
-
-    editaisDestaque.value = destaquesMapeados;
+    // Optimized mapping using helper function
+    editaisDestaque.value = response.map((contrato: any) => formatEdital(contrato, false, true));
     destaquesJaBuscados.value = true;
 
   } catch (error) {
-    console.error("Falha ao buscar destaques:", error);
     toast.add({
         severity: 'error',
         summary: 'Serviço indisponível',
@@ -191,7 +196,6 @@ async function showEditalDetails(edital: Edital, isFavorito : boolean) {
     selectedEdital.value = editalDetalhado;
 
   } catch (error) {
-    console.error("Falha ao buscar detalhes do edital:", error);
     isDetailSidebarVisible.value = false; 
   } finally {
     loadingStore.isLoading = false;
@@ -218,7 +222,7 @@ function trocarPagina(event: PageState): void {
 async function realizarInscricao(idEdital: string) {
   try{
 
-    const response = await $fetch('/api/licitmatch/inscrever-empresa', {
+    await $fetch('/api/licitmatch/inscrever-empresa', {
       method: 'POST',
       body: {
         "idEmpresa": user.idEmpresa,
@@ -242,7 +246,6 @@ async function realizarInscricao(idEdital: string) {
     isDetailSidebarVisible.value = false;
 
   }catch(error){
-    console.log(error);
     toast.add({
       severity: 'error',
       summary: 'Erro na inscrição',
